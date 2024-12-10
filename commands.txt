@@ -1,0 +1,3 @@
+Run scripts via Conda terminal so that you run them as a module
+
+python -m test_scripts.textract_tester
