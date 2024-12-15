@@ -1,38 +1,45 @@
 import pyautogui
 from config.config_loader import load_relative_regions_config
 import numpy as np
-import cv2
+from PIL import Image
 
 class ScreenGrabber():
     def __init__(self):
         self.screen_width, self.screen_height = pyautogui.size()
-        self.load_in_ets2_regions()
+        self._load_in_ets2_regions()
 
-    def crop_region(self, region, screenshot):
-        x = int(region[0] * self.screen_width)
-        y = int(region[1] * self.screen_height)
-        width = int(region[2] * self.screen_width)
-        height = int(region[3] * self.screen_height)
-        return screenshot[x:x+width, y:y+height]
-    
-    def grab_regions(self, regions):
-        screenshot = pyautogui.screenshot()
-        # Convert the screenshot to a NumPy array (from PIL Image to OpenCV format)
-        screenshot_np = np.array(screenshot)
-    
-        # Convert RGB to BGR (OpenCV uses BGR by default)
-        screenshot_bgr = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)
+    def _crop_region(self, region, screenshot):
+        x = int(region[0] * self.screen_width)  # Starting x (column)
+        y = int(region[1] * self.screen_height)  # Starting y (row)
+        width = int(region[2] * self.screen_width)  # Width of region
+        height = int(region[3] * self.screen_height)  # Height of region
 
+         # Validate cropping dimensions
+        if not (0 <= x < self.screen_width and 0 <= y < self.screen_height):
+            raise ValueError("Crop start points are outside the image bounds.")
+        if not (x + width <= self.screen_width and y + height <= self.screen_height):
+            raise ValueError("Crop dimensions extend outside the image.")
+        
+        # Proper NumPy slicing: [rows (height), columns (width)]
+        return screenshot[y:y+height, x:x+width]
+
+    
+    def _grab_regions(self, regions):
+        screenshot = np.array(pyautogui.screenshot().convert("RGB"))
         cropped_images = []
-        for region in regions:
-            cropped_images.append(self.crop_region(region, screenshot_bgr))
+        for i, region in enumerate(regions):
+            cropped_image = self._crop_region(region, screenshot)
+            cropped_images.append(cropped_image)
+
+            Image.fromarray(cropped_image).save(f"cropped_image_{i}.png")
         return cropped_images
     
-    def load_in_ets2_regions(self):
+    def _load_in_ets2_regions(self):
         self.regions = [load_relative_regions_config('information_region'), 
                         load_relative_regions_config('max_speed_region'),
                         load_relative_regions_config('current_speed_region')]
         
+    #returns information_region, max_speed_region, current_speed_region
     def get_regions(self):
-        return self.grab_regions(self.regions)
+        return self._grab_regions(self.regions)
         
