@@ -10,8 +10,8 @@ class StepInterpreter:
     def calculate_values(self):
         images = self.screen_grabber.get_regions()
         self._get_current_info(images[0])
-        # self._get_max_speed(images[1])
-        # self._get_current_speed(images[2])
+        self._get_max_speed(images[1])
+        self._get_current_speed(images[2])
 
     def _get_current_info(self, info_image):
         print(pytesseract.image_to_string(image=info_image))

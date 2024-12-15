@@ -28,10 +28,7 @@ class ScreenGrabber():
         screenshot = np.array(pyautogui.screenshot().convert("RGB"))
         cropped_images = []
         for i, region in enumerate(regions):
-            cropped_image = self._crop_region(region, screenshot)
-            cropped_images.append(cropped_image)
-
-            Image.fromarray(cropped_image).save(f"cropped_image_{i}.png")
+            cropped_images.append(self._crop_region(region, screenshot))
         return cropped_images
     
     def _load_in_ets2_regions(self):
