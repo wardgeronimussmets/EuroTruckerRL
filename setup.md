@@ -41,3 +41,4 @@
 - Algorithms
     - Select new job when complete
 	- Toe when broken
+	- Turn on lights

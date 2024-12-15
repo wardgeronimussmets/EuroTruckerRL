@@ -46,7 +46,7 @@ def capture_partial_screen_and_display(relative_region):
 # Example usage:
 # Define the region in relative percentages (from 0 to 1)
 # Example: (0.1, 0.1, 0.5, 0.5) will capture a 50% width and 50% height starting at (10%, 10%) of the screen.
-relative_region = load_relative_regions_config('max_speed_region')  # 10% from the top-left corner, 50% width, 50% height
+relative_region = load_relative_regions_config('information_region')  # 10% from the top-left corner, 50% width, 50% height
 
 # Capture and display the partial screenshot
 capture_partial_screen_and_display(relative_region)
