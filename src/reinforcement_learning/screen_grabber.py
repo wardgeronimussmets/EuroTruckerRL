@@ -34,9 +34,10 @@ class ScreenGrabber():
     def _load_in_ets2_regions(self):
         self.regions = [load_relative_regions_config('information_region'), 
                         load_relative_regions_config('max_speed_region'),
-                        load_relative_regions_config('current_speed_region')]
+                        load_relative_regions_config('current_speed_region'),
+                        load_relative_regions_config('text_information_region'),
+                        load_relative_regions_config('additional_info_region')]
         
     #returns information_region, max_speed_region, current_speed_region
     def get_regions(self):
         return self._grab_regions(self.regions)
-        

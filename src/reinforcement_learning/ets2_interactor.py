@@ -82,7 +82,42 @@ class ETS2Interactor:
         self.gamepad.update()
         print("Reset gamepad joysticks")
 
+    def update_accelerater_position(self, new_accelerater_position):
+        self.gamepad.right_trigger_float(value_float=new_accelerater_position)
+        self.gamepad.update()
 
+    def update_brake_position(self, new_brake_position):
+        self.gamepad.left_trigger_float(value_float=new_brake_position)
+        self.gamepad.update()
+
+    def update_steering_position(self, new_steering_position):
+        self.gamepad.left_joystick_float(x_value_float=new_steering_position, y_value_float=0)
+        self.gamepad.update()
+
+    def upshift(self):
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+    
+    def downshift(self):
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
+
+    def turn_off_engine(self):
+        self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+        self.gamepad.update()
+        time.sleep(2)
+        self.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+        self.gamepad.update()
+    
+    def rest(self):
+        #will only work when speed is zero
+        self.turn_off_engine()
+        self.press_A()
+
+    def travel_via_ferry(self):
+        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, 2, sleep_after=1, sleep_between=5)
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN, sleep_after=1)
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, sleep_after=7)
+    
+    
 
 
 
