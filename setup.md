@@ -42,3 +42,10 @@
     - Select new job when complete
 	- Toe when broken
 	- Turn on lights
+
+## Action spaces
+### Driving to target location agent
+- Throttle/Break application: Accelerate: 0, Idle: 1, Brake: 2
+- Gear control: Shift down: 0, Don't shift: 1, Shift Up: 2
+- Steering application: Steer left: 0, Steer straight: 1, Steer right: 2
+- Indicators: indicate left: 0, don't indicate: 1, indicate right: 2

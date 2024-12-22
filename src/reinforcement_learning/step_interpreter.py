@@ -7,35 +7,37 @@ import re
 INFO_DETECTED_TIMEOUT_SECONDS = 2.5 #Don't detect fines multiple times
 
 class StepInterpreter:
-    def __init__(self):
-        self.screen_grabber = ScreenGrabber()
+    def __init__(self, training_screen_size=(240, 134)):
+        self.screen_grabber = ScreenGrabber(training_screen_size)
         self.image_info_comparer = ImageInfoComparer()
         self.last_info_detected_time = 0 #info detection should be time as to not detect it multiple times
         pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
     def calculate_values(self):
-        images = self.screen_grabber.get_regions()
+        images = self.screen_grabber.get_images()
         screenshotTime = time.time()
         current_time_to_travel = self._get_current_time_to_travel(images[0])
         max_speed = self._get_max_speed(images[1])
         current_speed = self._get_current_speed(images[2])
         info_title = self._read_from_info_title_region(images[3])
+        whole_screen_resized = images[4]
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
         if info_title == ImageSimilarityMatch.INFO and screenshotTime - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
             penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[4])
             self.last_info_detected_time = screenshotTime
-        return current_time_to_travel, max_speed, current_speed, info_title ,penalty_score
+        return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized
+    
+    def get_resized_screenshot(self):
+        return self.screen_grabber.get_images()[4]
         
     def _read_from_info_title_region(self, info_title_image):
         currentInfoTitle = self.image_info_comparer.compare_info_image(info_title_image)
         match currentInfoTitle:
-            case ImageSimilarityMatch.FERRY, ImageSimilarityMatch.PARKING_LOT:
+            case ImageSimilarityMatch.FERRY, ImageSimilarityMatch.PARKING_LOT, ImageSimilarityMatch.FUEL_STOP:
                 print(currentInfoTitle)
                 return currentInfoTitle
-            case ImageSimilarityMatch.NO_MATCH:
+            case ImageSimilarityMatch.NO_MATCH, ImageSimilarityMatch.INFO:
                 return currentInfoTitle
-            case ImageSimilarityMatch.INFO:
-                print("info")
                 
 
     def _get_current_time_to_travel(self, info_image):
@@ -82,6 +84,9 @@ class StepInterpreter:
         if match:
             return self._damage_to_penalty_score(match.group(1))
         return 0
+    
+    def calculate_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
+        return (prev_time_to_travel - current_time_to_travel)*100 + current_speed / 10
     
     def _fine_to_penalty_score(self, fine):
         #fine's can go as high as €5000

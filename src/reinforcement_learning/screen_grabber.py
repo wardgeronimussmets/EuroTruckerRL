@@ -1,10 +1,11 @@
 import pyautogui
 from config.config_loader import load_relative_regions_config
 import numpy as np
-from PIL import Image
+import cv2
 
 class ScreenGrabber():
-    def __init__(self):
+    def __init__(self, training_screen_size=(240, 134)):
+        self.training_screen_size = training_screen_size
         self.screen_width, self.screen_height = pyautogui.size()
         self._load_in_ets2_regions()
 
@@ -24,11 +25,13 @@ class ScreenGrabber():
         return screenshot[y:y+height, x:x+width]
 
     
-    def _grab_regions(self, regions):
+    def _grab_region_images_and_whole(self, regions):
         screenshot = np.array(pyautogui.screenshot().convert("RGB"))
         cropped_images = []
         for i, region in enumerate(regions):
             cropped_images.append(self._crop_region(region, screenshot))
+        #add the whole screenshot
+        cropped_images.append(cv2.resize(screenshot, self.training_screen_size, interpolation=cv2.INTER_LINEAR))
         return cropped_images
     
     def _load_in_ets2_regions(self):
@@ -39,5 +42,5 @@ class ScreenGrabber():
                         load_relative_regions_config('additional_info_region')]
         
     #returns information_region, max_speed_region, current_speed_region
-    def get_regions(self):
-        return self._grab_regions(self.regions)
+    def get_images(self):
+        return self._grab_region_images_and_whole(self.regions)

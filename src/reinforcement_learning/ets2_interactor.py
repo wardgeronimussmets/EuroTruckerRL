@@ -82,6 +82,33 @@ class ETS2Interactor:
         self.gamepad.update()
         print("Reset gamepad joysticks")
 
+    def accelerate_full(self):
+        self.update_brake_position(0)
+        self.update_accelerater_position(1)
+    
+    def brake_full(self):
+        self.update_brake_position(1)
+        self.update_accelerater_position(0)
+    
+    def coast(self):
+        self.update_brake_position(0)
+        self.update_accelerater_position(0)
+
+    def steer_left_full(self):
+        self.update_steering_position(-1)
+
+    def steer_right_full(self):
+        self.update_steering_position(1)
+    
+    def steer_straight(self):
+        self.update_steering_position(0)
+
+    def indicate_left(self):
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_LEFT)
+    
+    def indicate_right(self):
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
+
     def update_accelerater_position(self, new_accelerater_position):
         self.gamepad.right_trigger_float(value_float=new_accelerater_position)
         self.gamepad.update()
