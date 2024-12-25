@@ -74,7 +74,10 @@ class StepInterpreter:
         for char in string:
             if char.isdigit():
                 num += char
-        return int(num)
+        if num != "":
+            return int(num)
+        else:
+            return 0
     
     def _extract_penalty_score_from_extra_information_from_gps(self, image):
         detectedText = pytesseract.image_to_string(image=image)
@@ -170,6 +173,6 @@ if __name__ == "__main__":
     print("Starting from step_interpreter")
     stepInt = StepInterpreter()
     for i in range(0,100):
-        stepInt.diplay_images_debug()
-        # stepInt.calculate_values()
+        # stepInt.diplay_images_debug()
+        stepInt.calculate_values()
         time.sleep(2)

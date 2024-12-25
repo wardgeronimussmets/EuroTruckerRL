@@ -17,6 +17,7 @@ class ImageInfoComparer:
         Returns:
         - similarity (ImageSimilarityMatch): If the image is similar enough for a match: true or false.
         """
+        image_to_compare = self.convert_to_grayscale_if_needed(image_to_compare)
         images = [self._ferry_image, self._info_image, self._parking_lot_image, self._fuel_stop]
         image_matches = [ImageSimilarityMatch.FERRY, ImageSimilarityMatch.INFO, ImageSimilarityMatch.PARKING_LOT, ImageSimilarityMatch.FUEL_STOP]
         for i in range(len(images)):
@@ -24,6 +25,11 @@ class ImageInfoComparer:
             if similarity > 0.8:
                 return image_matches[i]
         return ImageSimilarityMatch.NO_MATCH
+    
+    def convert_to_grayscale_if_needed(self, image):
+        if len(image.shape) == 3:
+            return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        return image
     
 class ImageSimilarityMatch:
     NO_MATCH = 0,

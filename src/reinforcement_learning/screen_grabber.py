@@ -14,8 +14,6 @@ class ScreenGrabber():
         y = int(region[1] * self.screen_height)  # Starting y (row)
         width = int(region[2] * self.screen_width)  # Width of region
         height = int(region[3] * self.screen_height)  # Height of region
-        print(screenshot.shape)
-        print(y, y + height,x, x + width)
 
          # Validate cropping dimensions
         if not (0 <= x < self.screen_width and 0 <= y < self.screen_height):
