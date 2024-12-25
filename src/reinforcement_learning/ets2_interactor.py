@@ -1,10 +1,14 @@
 import vgamepad as vg
 import time
+from reinforcement_learning.screen_grabber import ScreenGrabber
+from reinforcement_learning.image_comparer import CursorOnDriveComparer
 
 class ETS2Interactor:
     def __init__(self, log_inputs=False):
         self.log_inputs = log_inputs
         self.gamepad = vg.VX360Gamepad()
+        self.screen_grabber = ScreenGrabber()
+        self.cursor_on_drive_comparer = CursorOnDriveComparer()
         self.gamepad.reset()
         print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
         time.sleep(10)
@@ -18,7 +22,10 @@ class ETS2Interactor:
         wait_time_for_menu_loading_long = 5
         wait_time_for_world_loading = 10
         self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_START, sleep_after=wait_time_for_menu_loading_long, sleep_between_press_and_release=0.1)
-        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT, 1, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
+        if self.cursor_on_drive():
+            self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT, 1, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
+        else: #cursor on system
+            self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT, 2, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP, 3, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after) #move cursor to goto jobs
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, 2, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after + wait_time_for_menu_loading_long) #select goto jobs, wait for it to load, select the first job
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN, 5, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
@@ -34,6 +41,8 @@ class ETS2Interactor:
         self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, sleep_after=wait_time_for_world_loading)
         print("completed starting new job")
 
+    def cursor_on_drive(self):
+        return self.cursor_on_drive_comparer.compare_cursor_on_drive(self.screen_grabber.get_cursor_on_drive_region())
 
     def press_and_release_repeats(self, button, amount_of_presses, sleep_between=0, sleep_after=0):
         for i in range(amount_of_presses):
@@ -167,7 +176,7 @@ if __name__ == "__main__":
 
 
     interactor = ETS2Interactor(log_inputs=True)
-    # keep_gamepad_detected()
+    keep_gamepad_detected()
     print("You have 10 seconds before code will continue")
     start_new_job(interactor)
 

@@ -3,5 +3,7 @@
     "max_speed_region": [0.781, 0.725, 0.013, 0.02],
     "current_speed_region": [0.77, 0.65, 0.05, 0.03],
     "text_information_region": [0.77, 0.683, 0.05, 0.02],
-    "additional_info_region": [0.785, 0.715, 0.21, 0.2]
+    "additional_info_region": [0.785, 0.715, 0.21, 0.2],
+
+    "cursor_on_drive_region": [0.205, 0.86, 0.058, 0.12]
 }

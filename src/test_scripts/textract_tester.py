@@ -57,7 +57,7 @@ def capture_partial_screen_and_save(relative_region, output_path):
 
 # Example usage:
 # Define the region in relative percentages (from 0 to 1)
-relative_region = load_relative_regions_config('additional_info_region')  # Load region config
+relative_region = load_relative_regions_config('cursor_on_drive_region')  # Load region config
 output_path = os.path.join(os.getcwd(), "captured_region.png")  # Save to the current working directory
 
 # Capture and save the partial screenshot

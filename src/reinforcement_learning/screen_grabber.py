@@ -46,3 +46,6 @@ class ScreenGrabber():
     #returns information_region, max_speed_region, current_speed_region
     def get_images(self):
         return self._grab_region_images_and_whole(self.regions)
+    
+    def get_cursor_on_drive_region(self):
+        return self._crop_region(load_relative_regions_config('cursor_on_drive_region'), np.array(pyautogui.screenshot().convert("RGB")))
