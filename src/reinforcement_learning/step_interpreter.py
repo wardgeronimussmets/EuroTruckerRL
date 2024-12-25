@@ -23,6 +23,7 @@ class StepInterpreter:
         current_speed = self._get_current_speed(images[2])
         info_title = self._read_from_info_title_region(images[3])
         whole_screen_resized = images[4]
+        penalty_score = 0
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
         if info_title == ImageSimilarityMatch.INFO and screenshotTime - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
             penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[4])
@@ -175,4 +176,5 @@ if __name__ == "__main__":
     for i in range(0,100):
         # stepInt.diplay_images_debug()
         stepInt.calculate_values()
+        print("cycle is done")
         time.sleep(2)
