@@ -6,8 +6,8 @@ class ImageInfoComparer:
     def __init__(self):
         self._ferry_image = cv2.imread("resources/ferryInfoText.png", cv2.IMREAD_GRAYSCALE)
         self._info_image = cv2.imread("resources/infoInfoText.png", cv2.IMREAD_GRAYSCALE) #sometimes the title just says info, e.g. with fine information
-        self._parking_lot_image = cv2.imread("resources/parkingLotInfo.png", cv2.IMREAD_GRAYSCALE)
-        self._fuel_stop = cv2.imread("resources/fuelStop.png", cv2.IMREAD_GRAYSCALE)
+        self._parking_lot_image = cv2.imread("resources/parkingLotInfoText.png", cv2.IMREAD_GRAYSCALE)
+        self._fuel_stop = cv2.imread("resources/fuelStopText.png", cv2.IMREAD_GRAYSCALE)
 
     def compare_info_image(self, image_to_compare):
         """

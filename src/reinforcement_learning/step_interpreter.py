@@ -3,6 +3,8 @@ from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimila
 import pytesseract
 import time
 import re
+import cv2
+import numpy as np
 
 INFO_DETECTED_TIMEOUT_SECONDS = 2.5 #Don't detect fines multiple times
 
@@ -104,11 +106,70 @@ class StepInterpreter:
         if damage > 100:
             damage = 100
         return damage / 10
+    
 
+
+    def diplay_images_debug(self):
+        try:
+            # Get the images
+            images = self.screen_grabber.get_images()
+
+            # Check if the images array is empty
+            if not images or not any(img is not None for img in images):
+                print("No images to display.")
+                return
+
+            # Define screen constraints
+            screen_height = 900  # Maximum screen height
+            max_width = 1200     # Maximum screen width
+
+            # Process and scale images
+            total_height = 0
+            scaled_images = []
+            for img in images:
+                if img is not None:
+                    # Convert grayscale to BGR if necessary
+                    if len(img.shape) == 2:  # Grayscale image
+                        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+
+                    # Calculate scaling factor
+                    scale = min(screen_height / (len(images) * img.shape[0]), max_width / img.shape[1])
+                    new_width = int(img.shape[1] * scale)
+                    new_height = int(img.shape[0] * scale)
+                    resized_img = cv2.resize(img, (new_width, new_height))
+
+                    # Add padding to match the maximum width
+                    padded_img = cv2.copyMakeBorder(
+                        resized_img,
+                        0, 0, 0, max_width - new_width,
+                        borderType=cv2.BORDER_CONSTANT,
+                        value=(0, 0, 0)  # Black padding
+                    )
+                    scaled_images.append(padded_img)
+                    total_height += new_height
+                else:
+                    # Add a blank placeholder for None images
+                    blank_height = int(screen_height / len(images))
+                    scaled_images.append(np.zeros((blank_height, max_width, 3), dtype=np.uint8))
+                    total_height += blank_height
+
+            # Concatenate all images vertically
+            combined_image = cv2.vconcat(scaled_images)
+
+            # Display the combined image
+            cv2.imshow("All Images Vertically Scaled", combined_image)
+
+            # Wait for a key press and close the window
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
+
+        except Exception as e:
+            print(f"An error occurred while displaying images: {e}")
 
 if __name__ == "__main__":
     print("Starting from step_interpreter")
     stepInt = StepInterpreter()
     for i in range(0,100):
-        stepInt.calculate_values()
+        stepInt.diplay_images_debug()
+        # stepInt.calculate_values()
         time.sleep(2)

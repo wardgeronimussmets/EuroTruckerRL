@@ -6,17 +6,18 @@ class ETS2Interactor:
         self.log_inputs = log_inputs
         self.gamepad = vg.VX360Gamepad()
         self.gamepad.reset()
-        print("Starting virtual gamepad, you have 5 seconds to have the game focused")
-        time.sleep(5)
-        self.wiggle_joystick()
+        print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
+        time.sleep(10)
+        self.wiggle_joystick(3)
         self.reset_joysticks()
         print("Virtual gamepad ready")
 
     def start_new_job(self):
+        print("Starting new job")
         menu_navigation_sleep_after = 1
         wait_time_for_menu_loading_long = 5
         wait_time_for_world_loading = 10
-        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_START, sleep_after=menu_navigation_sleep_after, sleep_between_press_and_release=0.5)
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_START, sleep_after=wait_time_for_menu_loading_long, sleep_between_press_and_release=0.1)
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT, 1, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_UP, 3, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after) #move cursor to goto jobs
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, 2, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after + wait_time_for_menu_loading_long) #select goto jobs, wait for it to load, select the first job
@@ -31,6 +32,7 @@ class ETS2Interactor:
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, 2, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after + wait_time_for_menu_loading_long)
         self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_DOWN, 5, sleep_after=menu_navigation_sleep_after, sleep_between=menu_navigation_sleep_after)
         self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_A, sleep_after=wait_time_for_world_loading)
+        print("completed starting new job")
 
 
     def press_and_release_repeats(self, button, amount_of_presses, sleep_between=0, sleep_after=0):
@@ -63,8 +65,8 @@ class ETS2Interactor:
         if sleep_after > 0:
             time.sleep(sleep_after)
 
-    def wiggle_joystick(self):
-        for i in range(10):
+    def wiggle_joystick(self, amount_of_wiggles=10):
+        for i in range(amount_of_wiggles):
             self.gamepad.left_joystick_float(x_value_float=0.5, y_value_float=0.5)
             self.gamepad.update()
             print("wiggled to (0.5, 0.5)")

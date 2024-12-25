@@ -14,6 +14,8 @@ class ScreenGrabber():
         y = int(region[1] * self.screen_height)  # Starting y (row)
         width = int(region[2] * self.screen_width)  # Width of region
         height = int(region[3] * self.screen_height)  # Height of region
+        print(screenshot.shape)
+        print(y, y + height,x, x + width)
 
          # Validate cropping dimensions
         if not (0 <= x < self.screen_width and 0 <= y < self.screen_height):
@@ -35,11 +37,13 @@ class ScreenGrabber():
         return cropped_images
     
     def _load_in_ets2_regions(self):
-        self.regions = [load_relative_regions_config('information_region'), 
-                        load_relative_regions_config('max_speed_region'),
-                        load_relative_regions_config('current_speed_region'),
-                        load_relative_regions_config('text_information_region'),
-                        load_relative_regions_config('additional_info_region')]
+        self.regions = [
+            load_relative_regions_config('information_region'), 
+            load_relative_regions_config('max_speed_region'),
+            load_relative_regions_config('current_speed_region'),
+            load_relative_regions_config('text_information_region'),
+            load_relative_regions_config('additional_info_region')
+        ]
         
     #returns information_region, max_speed_region, current_speed_region
     def get_images(self):

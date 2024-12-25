@@ -1,11 +1,10 @@
-import gym
-from gym import spaces
-import gym.spaces
+import gymnasium as gym
 import numpy as np
 from reinforcement_learning.step_interpreter import StepInterpreter
 from reinforcement_learning.ets2_interactor import ETS2Interactor
 import math
 import time
+import stable_baselines3.common.env_checker
 
 TRUCK_MAX_DETECTABLED_SPEED = 200
 MAX_TIME_WITHOUT_PROGRESS_SECONDS = 60
@@ -21,7 +20,7 @@ class ETS2RLEnvironment(gym.Env):
             2: steering application: 0 - left, 1 - straight, 2 - right
             3: indicators: 0 - indicate left, 1 - don't indicate, 2 - indicate right
         '''
-        self.action_space = spaces.MultiDiscrete([3, 3, 3, 3])
+        self.action_space = gym.spaces.MultiDiscrete([3, 3, 3, 3])
 
         # Observation space:        (the screen)
         N_CHANNELS = 3
@@ -31,9 +30,9 @@ class ETS2RLEnvironment(gym.Env):
                 screen: "screenshot rezised",
                 max_speed: max speed numb
         '''
-        self.observation_space = spaces.Dict(
+        self.observation_space = gym.spaces.Dict(
             {
-                "screen": spaces.Box(low=0, high=255,
+                "screen": gym.spaces.Box(low=0, high=255,
                                                 shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8),
                 "max_speed": gym.spaces.Box(low=0, high=TRUCK_MAX_DETECTABLED_SPEED, shape=(1,), dtype=np.uint8) #assuming a max speed
             }
@@ -154,3 +153,7 @@ class ETS2RLEnvironment(gym.Env):
 
     def close(self):
         pass
+
+if __name__ == "__main__":
+    print("Testing environment")
+    stable_baselines3.common.env_checker.check_env(ETS2RLEnvironment(), warn=True, skip_render_check=True)
