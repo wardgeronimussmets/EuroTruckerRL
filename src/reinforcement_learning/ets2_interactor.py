@@ -137,10 +137,10 @@ class ETS2Interactor:
         self.gamepad.update()
 
     def upshift(self):
-        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER)
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_RIGHT_SHOULDER, sleep_between_press_and_release=0.05)
     
     def downshift(self):
-        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER)
+        self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER, sleep_between_press_and_release=0.05)
 
     def turn_off_engine(self):
         self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
@@ -166,7 +166,10 @@ class ETS2Interactor:
 if __name__ == "__main__":
     def trigger_button(interactor: ETS2Interactor):
         time.sleep(10)
-        interactor.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_START, sleep_between_press_and_release=0.1)
+        for i in range(0, 10):
+            interactor.upshift()
+            print("upshifted")
+            time.sleep(1)
         print("finished, will be sleeping for a while")
         time.sleep(1000)
 
@@ -182,5 +185,6 @@ if __name__ == "__main__":
     interactor = ETS2Interactor(log_inputs=True)
     keep_gamepad_detected()
     print("You have 10 seconds before code will continue")
-    start_new_job(interactor)
+    trigger_button(interactor)
+    # start_new_job(interactor)
 

@@ -1,6 +1,7 @@
 import cv2
 from skimage.metrics import structural_similarity as compare_ssim
 from reinforcement_learning.screen_grabber import ScreenGrabber
+from reinforcement_learning.types import RightLeftHandDriveType, ImageSimilarityMatch
 import time
 
 class ImageInfoComparer:
@@ -27,13 +28,7 @@ class ImageInfoComparer:
                 return image_matches[i]
         return ImageSimilarityMatch.NO_MATCH
 
-    
-class ImageSimilarityMatch:
-    NO_MATCH = 0,
-    FERRY = 1,
-    INFO = 2,
-    PARKING_LOT = 3,
-    FUEL_STOP = 4
+
 
 class CursorOnDriveComparer:
     def __init__(self):
@@ -45,6 +40,22 @@ class CursorOnDriveComparer:
         if simmilarity > 0.8:
             return True
         return False
+    
+class RightLeftHandDriveComparer:
+    def __init__(self):
+        self.left_hand_drive_image = cv2.imread("resources/leftHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
+        self.right_hand_drive_image = cv2.imread("resources/rightHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
+
+    def get_left_right_hand_drive_type(self, image_to_compare):
+        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)
+        left_similarity, _ = compare_ssim(image_to_compare, self.left_hand_drive_image, full=True)
+        right_similarity, _ = compare_ssim(image_to_compare, self.right_hand_drive_image, full=True)
+        if left_similarity > right_similarity and left_similarity > 0.8:
+            return RightLeftHandDriveType.LEFT
+        elif right_similarity > left_similarity and right_similarity > 0.8:
+            return RightLeftHandDriveType.RIGHT
+        else:
+            return RightLeftHandDriveType.NONE
 
 def convert_to_grayscale_if_needed(image):
     if len(image.shape) == 3:
@@ -62,6 +73,13 @@ if "__main__" == __name__:
             print("The images are quite similar.")
         else:
             print("The images are not very similar.")
+
+    def test_info_comparer():
+        comparer = ImageInfoComparer()
+        screen_grabber = ScreenGrabber(left_right_hand_drive_type=RightLeftHandDriveType.RIGHT)
+        similarity_score = comparer.compare_info_image(screen_grabber.get_images()[screen_grabber.get_info_title_image_index()])
+        print(f"Similarity score: {similarity_score}")
+
     for i in range(0,20):
-        test_cursor_on_drive_comparer()
+        test_info_comparer()
         time.sleep(2)

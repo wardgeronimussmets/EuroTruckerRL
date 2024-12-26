@@ -95,6 +95,8 @@ class StepInterpreter:
         return 0
     
     def calculate_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
+        if prev_time_to_travel is None or current_time_to_travel is None:
+            return 0
         return (prev_time_to_travel - current_time_to_travel)*100 + current_speed / 10
     
     def _fine_to_penalty_score(self, fine):
