@@ -42,6 +42,24 @@ class ScreenGrabber():
             load_relative_regions_config('text_information_region'),
             load_relative_regions_config('additional_info_region')
         ]
+
+    def get_current_time_to_travel_image_index(self):
+        return 0
+    
+    def get_max_speed_image_index(self):
+        return 1
+    
+    def get_current_speed_image_index(self):
+        return 2
+    
+    def get_info_title_image_index(self):
+        return 3
+    
+    def get_gps_info_image_index(self):
+        return 4
+    
+    def get_whole_screen_resized_image_index(self):
+        return 5
         
     #returns information_region, max_speed_region, current_speed_region
     def get_images(self):

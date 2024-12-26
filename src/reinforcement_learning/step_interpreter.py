@@ -19,14 +19,14 @@ class StepInterpreter:
         images = self.screen_grabber.get_images()
         screenshotTime = time.time()
         current_time_to_travel = self._get_current_time_to_travel(images[0])
-        max_speed = self._get_max_speed(images[1])
-        current_speed = self._get_current_speed(images[2])
-        info_title = self._read_from_info_title_region(images[3])
-        whole_screen_resized = images[4]
+        max_speed = self._get_max_speed(images[self.screen_grabber.get_max_speed_image_index()])
+        current_speed = self._get_current_speed(images[self.screen_grabber.get_current_speed_image_index()])
+        info_title = self._read_from_info_title_region(images[self.screen_grabber.get_info_title_image_index()])
+        whole_screen_resized = np.transpose(images[self.screen_grabber.get_whole_screen_resized_image_index()], (2, 0, 1))
         penalty_score = 0
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
         if info_title == ImageSimilarityMatch.INFO and screenshotTime - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
-            penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[4])
+            penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[self.screen_grabber.get_gps_info_image_index()])
             self.last_info_detected_time = screenshotTime
         return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized
     
@@ -47,21 +47,21 @@ class StepInterpreter:
         currentInfoString = pytesseract.image_to_string(image=info_image)
         splitInfo = currentInfoString.split(",")
         if len(splitInfo) > 2:
-            timeInfo = splitInfo[2]
+            timeInfo = splitInfo[2] # rest is information about the time of day and which day
             return self._extract_time_in_min_from_game_time(timeInfo)
+        else:
+            return 0
 
     def _extract_time_in_min_from_game_time(self, gameTimeString):
-        currentNum = 0
+        gameTimeString = gameTimeString.replace("\n", "").replace("\t", "")
         timeInMins = 0
         for chars in gameTimeString.split(" "):
-            if chars.isdigit():
-                currentNum += int(chars)
-            elif chars == "h":
-                timeInMins += currentNum * 60
-                currentNum = 0
-            elif chars == "min":
-                timeInMins += currentNum
-                currentNum = 0
+            if chars:
+                if len(chars) > 1 and chars[-1] == "h":
+                    timeInMins += int(chars[:-1]) * 60
+                elif len(chars) > 3 and chars[-3:] == "min":
+                    timeInMins += int(chars[:-3])
+        return timeInMins
                 
 
     def _get_max_speed(self, max_speed):

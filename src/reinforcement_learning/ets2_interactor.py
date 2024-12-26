@@ -4,17 +4,20 @@ from reinforcement_learning.screen_grabber import ScreenGrabber
 from reinforcement_learning.image_comparer import CursorOnDriveComparer
 
 class ETS2Interactor:
-    def __init__(self, log_inputs=False):
+    def __init__(self, log_inputs=False, skip_initialize=False):
         self.log_inputs = log_inputs
         self.gamepad = vg.VX360Gamepad()
         self.screen_grabber = ScreenGrabber()
         self.cursor_on_drive_comparer = CursorOnDriveComparer()
         self.gamepad.reset()
-        print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
-        time.sleep(10)
-        self.wiggle_joystick(3)
-        self.reset_joysticks()
-        print("Virtual gamepad ready")
+        if not skip_initialize:
+            print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
+            time.sleep(10)
+            self.wiggle_joystick(3)
+            self.reset_joysticks()
+            print("Virtual gamepad ready")
+        else:
+            print("skipped virtual gamepad initialisation fase")
 
     def start_new_job(self):
         print("Starting new job")

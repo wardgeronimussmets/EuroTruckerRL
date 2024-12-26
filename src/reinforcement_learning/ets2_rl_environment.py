@@ -11,7 +11,7 @@ MAX_TIME_WITHOUT_PROGRESS_SECONDS = 60
 
 class ETS2RLEnvironment(gym.Env):
 
-    def __init__(self):
+    def __init__(self, skip_initialize=False):
         super().__init__()
 
         '''action space:
@@ -34,13 +34,12 @@ class ETS2RLEnvironment(gym.Env):
             {
                 "screen": gym.spaces.Box(low=0, high=255,
                                                 shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8),
-                "max_speed": gym.spaces.Box(low=0, high=TRUCK_MAX_DETECTABLED_SPEED, shape=(1,), dtype=np.uint8) #assuming a max speed
+                "max_speed": gym.spaces.Discrete(TRUCK_MAX_DETECTABLED_SPEED + 1)  # assuming max speed is inclusive
             }
-
         )
         
         self.step_interpreter = StepInterpreter()
-        self.ets2_interactor = ETS2Interactor()
+        self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize)
         self.current_time_to_travel = 0
         self.last_improvement_time = math.inf
 
@@ -114,15 +113,16 @@ class ETS2RLEnvironment(gym.Env):
         if self.current_time_to_travel - current_time_to_travel > 0:
             #making progress
             self.last_improvement_time = current_time
-            return False
         else:
             #no progress
             if current_time - self.last_improvement_time > MAX_TIME_WITHOUT_PROGRESS_SECONDS:
                 return True
+        return False
             
 
     def reset(self, seed=None, options=None):
-        self.ets2_interactor.start_new_job()
+        # self.ets2_interactor.start_new_job()
+        # wsme
         current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
         self.current_time_to_travel = current_time_to_travel
         return (self._get_obs(whole_screen_resized, self._rescale_max_speed_if_necesarry(max_speed)), 
@@ -156,4 +156,4 @@ class ETS2RLEnvironment(gym.Env):
 
 if __name__ == "__main__":
     print("Testing environment")
-    stable_baselines3.common.env_checker.check_env(ETS2RLEnvironment(), warn=True, skip_render_check=True)
+    stable_baselines3.common.env_checker.check_env(ETS2RLEnvironment(skip_initialize=False), warn=True, skip_render_check=True)
