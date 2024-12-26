@@ -50,18 +50,21 @@ class StepInterpreter:
             timeInfo = splitInfo[2] # rest is information about the time of day and which day
             return self._extract_time_in_min_from_game_time(timeInfo)
         else:
-            return 0
+            return None
 
     def _extract_time_in_min_from_game_time(self, gameTimeString):
-        gameTimeString = gameTimeString.replace("\n", "").replace("\t", "")
-        timeInMins = 0
-        for chars in gameTimeString.split(" "):
-            if chars:
-                if len(chars) > 1 and chars[-1] == "h":
-                    timeInMins += int(chars[:-1]) * 60
-                elif len(chars) > 3 and chars[-3:] == "min":
-                    timeInMins += int(chars[:-3])
-        return timeInMins
+        try:
+            gameTimeString = gameTimeString.replace("\n", "").replace("\t", "")
+            timeInMins = 0
+            for chars in gameTimeString.split(" "):
+                if chars:
+                    if len(chars) > 1 and chars[-1] == "h":
+                        timeInMins += int(chars[:-1]) * 60
+                    elif len(chars) > 3 and chars[-3:] == "min":
+                        timeInMins += int(chars[:-3])
+            return timeInMins
+        except:
+            return None
                 
 
     def _get_max_speed(self, max_speed):

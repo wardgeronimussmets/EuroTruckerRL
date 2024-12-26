@@ -10,6 +10,6 @@ def load_model():
 if __name__ == "__main__":
     env = ETS2RLEnvironment()
     print("ETS2RLEnvironment Loaded, starting the training process")
-    model = PPO("MultiInputPolicy", env, verbose=1)
+    model = PPO("MultiInputPolicy", env, verbose=2)
     model.learn(total_timesteps=100)
     model.save("ppo_ets2")

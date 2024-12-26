@@ -40,8 +40,12 @@ class ETS2RLEnvironment(gym.Env):
         
         self.step_interpreter = StepInterpreter()
         self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize)
-        self.current_time_to_travel = 0
+        self.previous_time_to_travel = 0
         self.last_improvement_time = math.inf
+        
+        self.cumulated_reward = 0
+        self.cumulated_reward_count = 0
+        self.step_count = 0
 
     def step(self, action):
         if action is None:
@@ -80,12 +84,14 @@ class ETS2RLEnvironment(gym.Env):
                 self.ets2_interactor.indicate_right()
         
         
-        current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
-        positive_reward_score = self.step_interpreter.calculate_reward_score(self.current_time_to_travel, current_time_to_travel, current_speed)
-        self.current_time_to_travel = current_time_to_travel
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
+        positive_reward_score = self.step_interpreter.calculate_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
+        self.previous_time_to_travel = current_time_to_travel
         reward = positive_reward_score - penalty_score
         terminated = False #todo wsme: detect when the job is done
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
+        self._progress_logging(reward)
         return (self._get_obs(whole_screen_resized, self._rescale_max_speed_if_necesarry(max_speed)), 
                 reward, terminated, truncated, 
                 self._get_info(
@@ -96,6 +102,22 @@ class ETS2RLEnvironment(gym.Env):
                     reward_score=reward,
                     whole_screen_resized=whole_screen_resized
                 ))
+    
+    def _progress_logging(self, reward):
+        self.cumulated_reward += reward
+        self.cumulated_reward_count += 1
+        self.step_count += 1
+        if self.cumulated_reward_count > 100:
+            print("After", self.step_count, "steps, the cumulated reward is:", self.cumulated_reward / self.cumulated_reward_count)
+            self.cumulated_reward_count = 0
+
+    def _clean_time_to_travel(self, time_to_travel):
+        if time_to_travel is None:
+            if self.previous_time_to_travel is None:
+                return 0
+            else:
+                return self.previous_time_to_travel
+        return time_to_travel
     
     def _rescale_max_speed_if_necesarry(self, max_speed):
         if max_speed > TRUCK_MAX_DETECTABLED_SPEED:
@@ -110,7 +132,7 @@ class ETS2RLEnvironment(gym.Env):
     
     def _should_time_out_and_calculate(self, current_time_to_travel):
         current_time = time.time()
-        if self.current_time_to_travel - current_time_to_travel > 0:
+        if self.previous_time_to_travel - current_time_to_travel > 0:
             #making progress
             self.last_improvement_time = current_time
         else:
@@ -121,10 +143,9 @@ class ETS2RLEnvironment(gym.Env):
             
 
     def reset(self, seed=None, options=None):
-        # self.ets2_interactor.start_new_job()
-        # wsme
+        self.ets2_interactor.start_new_job()
         current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
-        self.current_time_to_travel = current_time_to_travel
+        self.previous_time_to_travel = current_time_to_travel
         return (self._get_obs(whole_screen_resized, self._rescale_max_speed_if_necesarry(max_speed)), 
                 self._get_info(
                     current_time_to_travel=current_time_to_travel,
