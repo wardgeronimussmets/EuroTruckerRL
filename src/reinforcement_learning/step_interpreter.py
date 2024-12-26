@@ -1,5 +1,6 @@
 from reinforcement_learning.screen_grabber import ScreenGrabber
-from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch
+from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
+from reinforcement_learning.types import RightLeftHandDriveType
 import pytesseract
 import time
 import re
@@ -12,6 +13,7 @@ class StepInterpreter:
     def __init__(self, training_screen_size=(240, 134)):
         self.screen_grabber = ScreenGrabber(training_screen_size)
         self.image_info_comparer = ImageInfoComparer()
+        self.right_left_hand_comparer = RightLeftHandDriveComparer()
         self.last_info_detected_time = 0 #info detection should be time as to not detect it multiple times
         pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
 
@@ -174,6 +176,22 @@ class StepInterpreter:
 
         except Exception as e:
             print(f"An error occurred while displaying images: {e}")
+
+    def set_right_left_hand_drive(self):
+        left_hand_drive_cursor_image = self.screen_grabber.get_left_hand_drive_region_image()
+        right_hand_drive_cursor_image = self.screen_grabber.get_right_hand_drive_region_image()
+        left_match = self.right_left_hand_comparer.get_left_right_hand_drive_type(left_hand_drive_cursor_image)
+        right_match = self.right_left_hand_comparer.get_left_right_hand_drive_type(right_hand_drive_cursor_image)
+        if left_match == RightLeftHandDriveType.LEFT and right_match == RightLeftHandDriveType.NONE:
+            self.screen_grabber.left_right_hand_drive_type = RightLeftHandDriveType.LEFT
+        elif left_match == RightLeftHandDriveType.NONE and right_match == RightLeftHandDriveType.RIGHT:
+            self.screen_grabber.left_right_hand_drive_type = RightLeftHandDriveType.RIGHT
+        else:
+            print("neither left nor right hand drive detected, individual mathes were", left_match, right_match)
+
+
+
+            
 
 if __name__ == "__main__":
     print("Starting from step_interpreter")

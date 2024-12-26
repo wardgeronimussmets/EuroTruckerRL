@@ -2,6 +2,7 @@ import gymnasium as gym
 import numpy as np
 from reinforcement_learning.step_interpreter import StepInterpreter
 from reinforcement_learning.ets2_interactor import ETS2Interactor
+from reinforcement_learning.types import RightLeftHandDriveType
 import math
 import time
 import stable_baselines3.common.env_checker
@@ -108,7 +109,7 @@ class ETS2RLEnvironment(gym.Env):
         self.cumulated_reward_count += 1
         self.step_count += 1
         if self.cumulated_reward_count > 100:
-            print("After", self.step_count, "steps, the cumulated reward is:", self.cumulated_reward / self.cumulated_reward_count)
+            print("After", self.step_count, "steps, the acumulated reward is:", self.cumulated_reward)
             self.cumulated_reward_count = 0
 
     def _clean_time_to_travel(self, time_to_travel):
@@ -144,6 +145,7 @@ class ETS2RLEnvironment(gym.Env):
 
     def reset(self, seed=None, options=None):
         self.ets2_interactor.start_new_job()
+        self.step_interpreter.set_right_left_hand_drive()
         current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
         self.previous_time_to_travel = current_time_to_travel
         return (self._get_obs(whole_screen_resized, self._rescale_max_speed_if_necesarry(max_speed)), 
@@ -152,7 +154,7 @@ class ETS2RLEnvironment(gym.Env):
                     max_speed=max_speed,
                     current_speed=current_speed,
                     user_logs="Reset the environment"
-                ))
+                ))        
     
     def _get_info(self, **kwargs):
         # Define the list of allowed keys
