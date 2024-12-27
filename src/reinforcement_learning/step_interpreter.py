@@ -1,6 +1,7 @@
 from reinforcement_learning.screen_grabber import ScreenGrabber
 from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
 from reinforcement_learning.types import RightLeftHandDriveType
+from reinforcement_learning.terminal import bcolors
 import pytesseract
 import time
 import re
@@ -28,6 +29,7 @@ class StepInterpreter:
         penalty_score = 0
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
         if info_title == ImageSimilarityMatch.INFO and screenshotTime - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
+            print("is info", info_title)
             penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[self.screen_grabber.get_gps_info_image_index()])
             self.last_info_detected_time = screenshotTime
         return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized
@@ -38,10 +40,9 @@ class StepInterpreter:
     def _read_from_info_title_region(self, info_title_image):
         currentInfoTitle = self.image_info_comparer.compare_info_image(info_title_image)
         match currentInfoTitle:
-            case ImageSimilarityMatch.FERRY, ImageSimilarityMatch.PARKING_LOT, ImageSimilarityMatch.FUEL_STOP:
-                print(currentInfoTitle)
+            case ImageSimilarityMatch.FERRY | ImageSimilarityMatch.PARKING_LOT | ImageSimilarityMatch.FUEL_STOP:
                 return currentInfoTitle
-            case ImageSimilarityMatch.NO_MATCH, ImageSimilarityMatch.INFO:
+            case ImageSimilarityMatch.NO_MATCH | ImageSimilarityMatch.INFO:
                 return currentInfoTitle
                 
 
@@ -108,7 +109,7 @@ class StepInterpreter:
             return 0
         elif fine_numb > 5000:
             fine_numb = 5000
-        return int(fine) / 500
+        return int(fine) / 5
     
     def _damage_to_penalty_score(self, damage):
         damage = int(damage)
@@ -116,7 +117,7 @@ class StepInterpreter:
             return 0
         if damage > 100:
             damage = 100
-        return damage / 10
+        return damage * 10
     
 
 
@@ -180,14 +181,13 @@ class StepInterpreter:
     def set_right_left_hand_drive(self):
         left_hand_drive_cursor_image = self.screen_grabber.get_left_hand_drive_region_image()
         right_hand_drive_cursor_image = self.screen_grabber.get_right_hand_drive_region_image()
-        left_match = self.right_left_hand_comparer.get_left_right_hand_drive_type(left_hand_drive_cursor_image)
-        right_match = self.right_left_hand_comparer.get_left_right_hand_drive_type(right_hand_drive_cursor_image)
-        if left_match == RightLeftHandDriveType.LEFT and right_match == RightLeftHandDriveType.NONE:
-            self.screen_grabber.left_right_hand_drive_type = RightLeftHandDriveType.LEFT
-        elif left_match == RightLeftHandDriveType.NONE and right_match == RightLeftHandDriveType.RIGHT:
-            self.screen_grabber.left_right_hand_drive_type = RightLeftHandDriveType.RIGHT
+        left_right_hand_drive_match = self.right_left_hand_comparer.get_left_right_hand_drive_type(left_hand_drive_cursor_image, right_hand_drive_cursor_image)
+        if left_right_hand_drive_match == RightLeftHandDriveType.LEFT:
+            self.screen_grabber.update_left_right_hand_drive(RightLeftHandDriveType.LEFT)
+        elif left_right_hand_drive_match == RightLeftHandDriveType.RIGHT:
+            self.screen_grabber.update_left_right_hand_drive(RightLeftHandDriveType.RIGHT)
         else:
-            print("neither left nor right hand drive detected, individual mathes were", left_match, right_match)
+            print(f"{bcolors.WARNING}WARNING: neither left nor right hand drive detected, individual mathes were {left_right_hand_drive_match}{bcolors.ENDC}")
 
 
 
@@ -196,8 +196,10 @@ class StepInterpreter:
 if __name__ == "__main__":
     print("Starting from step_interpreter")
     stepInt = StepInterpreter()
+
     for i in range(0,100):
+        stepInt.set_right_left_hand_drive()
+        # stepInt.screen_grabber._left_right_hand_drive_type = RightLeftHandDriveType.LEFT
         # stepInt.diplay_images_debug()
-        stepInt.calculate_values()
-        print("cycle is done")
+        current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = stepInt.calculate_values()
         time.sleep(2)

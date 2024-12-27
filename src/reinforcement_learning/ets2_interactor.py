@@ -21,6 +21,7 @@ class ETS2Interactor:
 
     def start_new_job(self):
         print("Starting new job")
+        self.reset_joysticks()
         menu_navigation_sleep_after = 1
         wait_time_for_menu_loading_long = 5
         wait_time_for_world_loading = 10
@@ -95,7 +96,6 @@ class ETS2Interactor:
         self.gamepad.left_joystick(x_value=0, y_value=0)
         self.gamepad.right_joystick(x_value=0, y_value=0)
         self.gamepad.update()
-        print("Reset gamepad joysticks")
 
     def accelerate_full(self):
         self.update_brake_position(0)

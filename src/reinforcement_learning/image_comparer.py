@@ -46,10 +46,11 @@ class RightLeftHandDriveComparer:
         self.left_hand_drive_image = cv2.imread("resources/leftHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
         self.right_hand_drive_image = cv2.imread("resources/rightHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
 
-    def get_left_right_hand_drive_type(self, image_to_compare):
-        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)
-        left_similarity, _ = compare_ssim(image_to_compare, self.left_hand_drive_image, full=True)
-        right_similarity, _ = compare_ssim(image_to_compare, self.right_hand_drive_image, full=True)
+    def get_left_right_hand_drive_type(self, left_hand_drive_image, right_hand_drive_image):
+        left_hand_drive_image_to_compare = convert_to_grayscale_if_needed(left_hand_drive_image)
+        right_hand_drive_image_to_compare = convert_to_grayscale_if_needed(right_hand_drive_image)
+        left_similarity, _ = compare_ssim(left_hand_drive_image_to_compare, self.left_hand_drive_image, full=True)
+        right_similarity, _ = compare_ssim(right_hand_drive_image_to_compare, self.right_hand_drive_image, full=True)
         if left_similarity > right_similarity and left_similarity > 0.8:
             return RightLeftHandDriveType.LEFT
         elif right_similarity > left_similarity and right_similarity > 0.8:
