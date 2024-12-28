@@ -10,6 +10,18 @@ class ImageInfoComparer:
         self._info_image = cv2.imread("resources/infoInfoText.png", cv2.IMREAD_GRAYSCALE) #sometimes the title just says info, e.g. with fine information
         self._parking_lot_image = cv2.imread("resources/parkingLotInfoText.png", cv2.IMREAD_GRAYSCALE)
         self._fuel_stop = cv2.imread("resources/fuelStopText.png", cv2.IMREAD_GRAYSCALE)
+        self.fit_images_to_correct_size()
+        
+    def fit_images_to_correct_size(self):
+        screen_grabber = ScreenGrabber()
+        test_image = screen_grabber.get_images()[screen_grabber.get_info_title_image_index()]
+        test_image = convert_to_grayscale_if_needed(test_image)
+        if test_image.shape != self._ferry_image.shape:
+            print("Resizing info detection images to correct size")
+            self._ferry_image = resize_image(self._ferry_image, test_image.shape)
+            self._info_image = resize_image(self._info_image, test_image.shape)
+            self._parking_lot_image = resize_image(self._parking_lot_image, test_image.shape)
+            self._fuel_stop = resize_image(self._fuel_stop, test_image.shape)
 
     def compare_info_image(self, image_to_compare):
         """
@@ -33,6 +45,15 @@ class ImageInfoComparer:
 class CursorOnDriveComparer:
     def __init__(self):
         self._cursor_on_drive_image = cv2.imread("resources/cursorOnDrive.png", cv2.IMREAD_GRAYSCALE)
+        self.fit_images_to_correct_size()
+        
+    def fit_images_to_correct_size(self):
+        screen_grabber = ScreenGrabber()
+        test_image = screen_grabber.get_cursor_on_drive_image()
+        test_image = convert_to_grayscale_if_needed(test_image)
+        if test_image.shape != self._cursor_on_drive_image.shape:
+            print("Resizing cursor on drive image to correct size")
+            self._cursor_on_drive_image = resize_image(self._cursor_on_drive_image, test_image.shape)
     
     def compare_cursor_on_drive(self, image_to_compare):
         image_to_compare = convert_to_grayscale_if_needed(image_to_compare)
@@ -45,6 +66,18 @@ class RightLeftHandDriveComparer:
     def __init__(self):
         self.left_hand_drive_image = cv2.imread("resources/leftHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
         self.right_hand_drive_image = cv2.imread("resources/rightHandDriveDetector.png", cv2.IMREAD_GRAYSCALE)
+        self.fit_images_to_correct_size()
+        
+    def fit_images_to_correct_size(self):
+        screen_grabber = ScreenGrabber()
+        test_image = screen_grabber.get_left_hand_drive_region_image()
+        test_image = convert_to_grayscale_if_needed(test_image)        
+        if test_image.shape != self.left_hand_drive_image.shape:
+            print("Resizing left hand drive image to correct size")
+            self.left_hand_drive_image = resize_image(self.left_hand_drive_image, test_image.shape)
+        if test_image.shape != self.right_hand_drive_image.shape:
+            print("Resizing right hand drive image to correct size")
+            self.right_hand_drive_image = resize_image(self.right_hand_drive_image, test_image.shape)
 
     def get_left_right_hand_drive_type(self, left_hand_drive_image, right_hand_drive_image):
         left_hand_drive_image_to_compare = convert_to_grayscale_if_needed(left_hand_drive_image)
@@ -63,12 +96,18 @@ def convert_to_grayscale_if_needed(image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     return image
 
-if "__main__" == __name__:
+def resize_image(image_to_resize, target_shape):
+    # Read the image
+    if image_to_resize is None:
+        raise ValueError("Image not found or unable to read")
+    return cv2.resize(image_to_resize, (target_shape[1], target_shape[0]), interpolation=cv2.INTER_LINEAR)
 
+
+if "__main__" == __name__:
     def test_cursor_on_drive_comparer():
         comparer = CursorOnDriveComparer()
         screen_grabber = ScreenGrabber()
-        similarity_score = comparer.compare_cursor_on_drive(screen_grabber.get_cursor_on_drive_region())
+        similarity_score = comparer.compare_cursor_on_drive(screen_grabber.get_cursor_on_drive_image())
         print(f"Similarity score: {similarity_score}")
         if similarity_score > 0.8:
             print("The images are quite similar.")

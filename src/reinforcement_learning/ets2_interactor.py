@@ -17,7 +17,7 @@ class ETS2Interactor:
             self.reset_joysticks()
             print("Virtual gamepad ready")
         else:
-            print("skipped virtual gamepad initialisation fase")
+            print("skipped virtual gamepad initialisation")
 
     def start_new_job(self):
         print("Starting new job")
@@ -47,7 +47,7 @@ class ETS2Interactor:
         print("completed starting new job")
 
     def cursor_on_drive(self):
-        return self.cursor_on_drive_comparer.compare_cursor_on_drive(self.screen_grabber.get_cursor_on_drive_region())
+        return self.cursor_on_drive_comparer.compare_cursor_on_drive(self.screen_grabber.get_cursor_on_drive_image())
 
     def press_and_release_repeats(self, button, amount_of_presses, sleep_between=0, sleep_after=0):
         for i in range(amount_of_presses):
@@ -80,17 +80,16 @@ class ETS2Interactor:
             time.sleep(sleep_after)
 
     def wiggle_joystick(self, amount_of_wiggles=10):
+        print("Starting wiggling left joystick")
         for i in range(amount_of_wiggles):
             self.gamepad.left_joystick_float(x_value_float=0.5, y_value_float=0.5)
             self.gamepad.update()
-            print("wiggled to (0.5, 0.5)")
             self.gamepad.left_joystick_float(x_value_float=0, y_value_float=0)
             self.gamepad.update()
-            print("wiggled to (0, 0)")
             self.gamepad.left_joystick_float(x_value_float=-0.5, y_value_float=-0.5)
             self.gamepad.update()
-            print("wiggled to (-0.5, -0.5)")
             time.sleep(0.1)
+        print("Finished wiggling left joystick")
 
     def reset_joysticks(self):
         self.gamepad.left_joystick(x_value=0, y_value=0)
@@ -180,9 +179,25 @@ if __name__ == "__main__":
     def keep_gamepad_detected():
         print("keeping gamepad detected, nothing else will be done")
         time.sleep(1000) #simply keep gamepad detected
+        
+    def upshift(interactor:ETS2Interactor):
+        time.sleep(5)
+        print("upshift")
+        interactor.upshift()
+    
+    def downshift(interactor:ETS2Interactor):
+        time.sleep(5)
+        print("downshift")
+        interactor.downshift()
+        time.sleep(5)
+        print("downshift finished")
+        interactor.downshift()
+        
 
 
-    interactor = ETS2Interactor(log_inputs=True)
+    interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
+    interactor.reset_joysticks()
+    downshift(interactor)
     keep_gamepad_detected()
     print("You have 10 seconds before code will continue")
     trigger_button(interactor)

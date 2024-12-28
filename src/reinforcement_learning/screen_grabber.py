@@ -78,7 +78,7 @@ class ScreenGrabber():
     def get_images(self):
         return self._grab_region_images_and_whole(self.regions)
     
-    def get_cursor_on_drive_region(self):
+    def get_cursor_on_drive_image(self):
         return self._crop_region(load_relative_regions_config('cursor_on_drive_region'), np.array(pyautogui.screenshot().convert("RGB")))
     
     def update_left_right_hand_drive(self, left_right_hand_drive_type):

@@ -41,7 +41,7 @@ class ETS2RLEnvironment(gym.Env):
         )
         
         self.step_interpreter = StepInterpreter()
-        self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize)
+        self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize, log_inputs=True)
         self.previous_time_to_travel = 0
         self.last_improvement_time = math.inf
         
@@ -87,6 +87,7 @@ class ETS2RLEnvironment(gym.Env):
         
         
         current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        print("current_time_to_travel_uncleaned", current_time_to_travel_uncleaned, "max_speed", max_speed, "current_speed", current_speed, "info_title", info_title, "penalty_score", penalty_score)
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         positive_reward_score = self.step_interpreter.calculate_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
         self.previous_time_to_travel = current_time_to_travel
