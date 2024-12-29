@@ -10,3 +10,9 @@ class ImageSimilarityMatch(Enum):
     INFO = 2,
     PARKING_LOT = 3,
     FUEL_STOP = 4
+    
+class CurrentLightMode(Enum):
+    OFF  = 0,
+    PARKING = 1,
+    ON = 2,
+    HIGH_BEAMS = 3

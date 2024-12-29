@@ -20,8 +20,9 @@ class ETS2RLEnvironment(gym.Env):
             1: gear control: 0 - downshift, 1 - don't shift, 2 - upshift
             2: steering application: 0 - left, 1 - straight, 2 - right
             3: indicators: 0 - indicate left, 1 - don't indicate, 2 - indicate right
+            4: lights: 0 - off, 1 - parking mode, 2 - on, 3 - high beams
         '''
-        self.action_space = gym.spaces.MultiDiscrete([3, 3, 3, 3])
+        self.action_space = gym.spaces.MultiDiscrete([3, 3, 3, 3, 4])
 
         # Observation space:        (the screen)
         N_CHANNELS = 3
@@ -84,15 +85,26 @@ class ETS2RLEnvironment(gym.Env):
                 self.ets2_interactor.indicate_left()
             case 2:
                 self.ets2_interactor.indicate_right()
+                
+        lights_input = action[4]
+        match lights_input:
+            case 0:
+                self.ets2_interactor.lights_off()
+            case 1:
+                self.ets2_interactor.lights_parking()
+            case 2:
+                self.ets2_interactor.lights_on()
+            case 3:
+                self.ets2_interactor.high_beams()
         
         
         current_time_to_travel_uncleaned, max_speed, current_speed, info_title, unruly_behaviour_score, whole_screen_resized = self.step_interpreter.calculate_values()
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         position_reward_score = self.step_interpreter.calculate_position_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
-        self.previous_time_to_travel = current_time_to_travel
         reward = position_reward_score - unruly_behaviour_score
         terminated = False #todo wsme: detect when the job is done
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
+        self.previous_time_to_travel = current_time_to_travel
         self._progress_logging(reward)
         return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
                 reward, terminated, truncated, 
@@ -136,6 +148,7 @@ class ETS2RLEnvironment(gym.Env):
     
     def _should_time_out_and_calculate(self, current_time_to_travel):
         current_time = time.time()
+        print(f"in time out: current_time_to_travel: {current_time_to_travel}, self.previous_time_to_travel: {self.previous_time_to_travel}")
         if self.previous_time_to_travel - current_time_to_travel > 0:
             #making progress
             self.last_improvement_time = current_time
@@ -151,7 +164,8 @@ class ETS2RLEnvironment(gym.Env):
         self.ets2_interactor.start_new_job()
         self.step_interpreter.set_right_left_hand_drive()
         self.last_improvement_time = time.time()
-        current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         self.previous_time_to_travel = current_time_to_travel
         return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
                 self._get_info(

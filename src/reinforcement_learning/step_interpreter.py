@@ -98,14 +98,17 @@ class StepInterpreter:
         return 0
     
     def calculate_position_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
+        print(f"prev_time_to_travel: {prev_time_to_travel}, current_time_to_travel: {current_time_to_travel}, current_speed: {current_speed}")
         if prev_time_to_travel is None or current_time_to_travel is None:
             return 0
-        reward = (prev_time_to_travel - current_time_to_travel)*100 + current_speed / 10
-        if reward < 10: #10 because some buffer
+        progress = prev_time_to_travel - current_time_to_travel
+        reward = progress * 100 + current_speed / 10
+        print(f"progress: {progress}, reward: {reward}")
+        if progress < -10: #-10 because some buffer
             #went the wrong way
-            if reward < 100:
+            if reward < -100:
                 reward = -100
-            print(f"Penalty for going the wrong way: {reward}", TerminalColors.PENALTY)
+            print_colored(f"Penalty for going the wrong way: {reward}", TerminalColors.PENALTY)
         return reward
     
     def _fine_to_penalty_score(self, fine):

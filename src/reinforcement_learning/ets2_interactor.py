@@ -2,6 +2,7 @@ import vgamepad as vg
 import time
 from reinforcement_learning.screen_grabber import ScreenGrabber
 from reinforcement_learning.image_comparer import CursorOnDriveComparer
+from reinforcement_learning.types import CurrentLightMode
 
 class ETS2Interactor:
     def __init__(self, log_inputs=False, skip_initialize=False):
@@ -9,6 +10,7 @@ class ETS2Interactor:
         self.gamepad = vg.VX360Gamepad()
         self.screen_grabber = ScreenGrabber()
         self.cursor_on_drive_comparer = CursorOnDriveComparer()
+        self._current_lights = CurrentLightMode.OFF
         self.gamepad.reset()
         if not skip_initialize:
             print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
@@ -143,6 +145,56 @@ class ETS2Interactor:
     
     def downshift(self):
         self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER, sleep_between_press_and_release=0.05)
+        
+    def lights_off(self):
+        self._release_high_beams()
+        switch_times = 0
+        match self._current_lights:
+            case CurrentLightMode.OFF:
+                pass
+            case CurrentLightMode.PARKING:
+                switch_times = 2
+            case CurrentLightMode.ON:
+                switch_times = 1
+        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
+        self._current_lights = CurrentLightMode.OFF
+    
+    def lights_on(self):
+        self._release_high_beams()
+        switch_times = 0
+        match self._current_lights:
+            case CurrentLightMode.OFF:
+                switch_times = 1
+            case CurrentLightMode.PARKING:
+                switch_times = 2
+            case CurrentLightMode.ON:
+                pass
+        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
+        self._current_lights = CurrentLightMode.ON
+    
+    def lights_parking(self):
+        self._release_high_beams()
+        switch_times = 0
+        match self._current_lights:
+            case CurrentLightMode.OFF:
+                switch_times = 2
+            case CurrentLightMode.PARKING:
+                pass
+            case CurrentLightMode.ON:
+                switch_times = 1
+        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
+        self._current_lights = CurrentLightMode.PARKING
+        
+    def _release_high_beams(self):
+        if self._current_lights == CurrentLightMode.HIGH_BEAMS:
+            self.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
+            self.gamepad.update()
+    
+    def high_beams(self):
+        if self._current_lights != CurrentLightMode.HIGH_BEAMS:
+            self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
+            self.gamepad.update()
+        self._current_lights = CurrentLightMode.HIGH_BEAMS
 
     def turn_off_engine(self):
         self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
@@ -200,7 +252,6 @@ if __name__ == "__main__":
 
     interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
     interactor.reset_joysticks()
-    downshift(interactor)
     keep_gamepad_detected()
     print("You have 10 seconds before code will continue")
     trigger_button(interactor)
