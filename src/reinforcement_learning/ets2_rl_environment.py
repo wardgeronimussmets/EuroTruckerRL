@@ -41,7 +41,7 @@ class ETS2RLEnvironment(gym.Env):
         )
         
         self.step_interpreter = StepInterpreter()
-        self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize, log_inputs=True)
+        self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize, log_inputs=False)
         self.previous_time_to_travel = 0
         self.last_improvement_time = math.inf
         

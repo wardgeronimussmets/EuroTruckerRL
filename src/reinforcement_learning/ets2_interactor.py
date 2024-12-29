@@ -67,12 +67,15 @@ class ETS2Interactor:
         self.gamepad.update()
         self._sleep_if_needed(sleep_after)
 
-    # Certain buttons won't be detected if they are relaesed immediately -> check if one of them is released immediately -> overwrite if true
+    # Certain buttons won't be detected if they are released immediately -> check if one of them is released immediately -> overwrite if true
+    # No buttons will be detected if they are released immediately on slower machines
     def correct_sleep_between_if_necesarry(self, button, sleep_between_press_and_release):
         if sleep_between_press_and_release == 0:
             if button == vg.XUSB_BUTTON.XUSB_GAMEPAD_START:
                 print("Warning: anomaly detected, " + button.name + " will be released after 0.5 seconds instead of immediately")
                 return 0.5
+            else:
+                return 0.05
         return sleep_between_press_and_release
 
     def _sleep_if_needed(self, sleep_after):
