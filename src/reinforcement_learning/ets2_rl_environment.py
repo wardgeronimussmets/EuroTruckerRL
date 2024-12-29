@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 from reinforcement_learning.step_interpreter import StepInterpreter
 from reinforcement_learning.ets2_interactor import ETS2Interactor
-from reinforcement_learning.terminal import bcolors
+from reinforcement_learning.terminal import TerminalColors
 import math
 import time
 import stable_baselines3.common.env_checker
@@ -86,12 +86,11 @@ class ETS2RLEnvironment(gym.Env):
                 self.ets2_interactor.indicate_right()
         
         
-        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
-        print("current_time_to_travel_uncleaned", current_time_to_travel_uncleaned, "max_speed", max_speed, "current_speed", current_speed, "info_title", info_title, "penalty_score", penalty_score)
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, unruly_behaviour_score, whole_screen_resized = self.step_interpreter.calculate_values()
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
-        positive_reward_score = self.step_interpreter.calculate_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
+        position_reward_score = self.step_interpreter.calculate_position_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
         self.previous_time_to_travel = current_time_to_travel
-        reward = positive_reward_score - penalty_score
+        reward = position_reward_score - unruly_behaviour_score
         terminated = False #todo wsme: detect when the job is done
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
         self._progress_logging(reward)
@@ -143,7 +142,7 @@ class ETS2RLEnvironment(gym.Env):
         else:
             #no progress
             if current_time - self.last_improvement_time > MAX_TIME_WITHOUT_PROGRESS_SECONDS:
-                print(f"{bcolors.INFO}Timed out, to long ({current_time - self.last_improvement_time}) seconds without progress{bcolors.ENDC}")
+                print(f"{TerminalColors.INFO}Timed out, to long ({current_time - self.last_improvement_time}) seconds without progress{TerminalColors.ENDC}")
                 return True
         return False
             

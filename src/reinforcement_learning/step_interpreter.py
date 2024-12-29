@@ -1,7 +1,7 @@
 from reinforcement_learning.screen_grabber import ScreenGrabber
 from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
 from reinforcement_learning.types import RightLeftHandDriveType
-from reinforcement_learning.terminal import bcolors
+from reinforcement_learning.terminal import print_colored, TerminalColors
 import pytesseract
 import time
 import re
@@ -97,27 +97,40 @@ class StepInterpreter:
             return self._damage_to_penalty_score(match.group(1))
         return 0
     
-    def calculate_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
+    def calculate_position_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
         if prev_time_to_travel is None or current_time_to_travel is None:
             return 0
-        return (prev_time_to_travel - current_time_to_travel)*100 + current_speed / 10
+        reward = (prev_time_to_travel - current_time_to_travel)*100 + current_speed / 10
+        if reward < 10: #10 because some buffer
+            #went the wrong way
+            if reward < 100:
+                reward = -100
+            print(f"Penalty for going the wrong way: {reward}", TerminalColors.PENALTY)
+        return reward
     
     def _fine_to_penalty_score(self, fine):
         #fine's can go as high as €5000
         fine_numb = int(fine)
-        if fine_numb < 0:
+        if fine_numb <= 0:
             return 0
-        elif fine_numb > 5000:
-            fine_numb = 5000
-        return int(fine) / 5
+        else:
+            #no finei
+            if  fine_numb > 5000:
+                fine_numb = 5000
+            penalty = int(fine) / 5
+            print_colored(f"Penalty from fine: {penalty}", TerminalColors.PENALTY)
+            return penalty
     
     def _damage_to_penalty_score(self, damage):
         damage = int(damage)
-        if damage < 0:
+        if damage <= 0:
             return 0
-        if damage > 100:
-            damage = 100
-        return damage * 10
+        else:
+            if damage > 100:
+                damage = 100
+            penalty = int(damage) * 10
+            print_colored(f"Penalty from damage: {penalty}", TerminalColors.PENALTY)
+            return penalty
     
 
 
@@ -187,8 +200,7 @@ class StepInterpreter:
         elif left_right_hand_drive_match == RightLeftHandDriveType.RIGHT:
             self.screen_grabber.update_left_right_hand_drive(RightLeftHandDriveType.RIGHT)
         else:
-            print(f"{bcolors.WARNING}WARNING: neither left nor right hand drive detected, individual mathes were {left_right_hand_drive_match}{bcolors.ENDC}")
-
+            print_colored(f"WARNING: neither left nor right hand drive detected, individual mathes were {left_right_hand_drive_match}", TerminalColors.WARNING)
 
 
             
