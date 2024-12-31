@@ -43,7 +43,8 @@ class ScreenGrabber():
                 load_relative_regions_config('rhd_max_speed_region'),
                 load_relative_regions_config('rhd_current_speed_region'),
                 load_relative_regions_config('rhd_text_information_region'),
-                load_relative_regions_config('rhd_additional_info_region')
+                load_relative_regions_config('rhd_additional_info_region'),
+                load_relative_regions_config('rhd_current_gear_region'),
             ]
             return
         elif self._left_right_hand_drive_type == RightLeftHandDriveType.NONE and not ignore_warnings:
@@ -53,7 +54,8 @@ class ScreenGrabber():
             load_relative_regions_config('lhd_max_speed_region'),
             load_relative_regions_config('lhd_current_speed_region'),
             load_relative_regions_config('lhd_text_information_region'),
-            load_relative_regions_config('lhd_additional_info_region')
+            load_relative_regions_config('lhd_additional_info_region'),
+            load_relative_regions_config('lhd_current_gear_region'),
         ]
 
     def get_current_time_to_travel_image_index(self):
@@ -71,8 +73,11 @@ class ScreenGrabber():
     def get_gps_info_image_index(self):
         return 4
     
-    def get_whole_screen_resized_image_index(self):
+    def get_current_gear_image_index(self):
         return 5
+    
+    def get_whole_screen_resized_image_index(self):
+        return len(self.regions) #will always be appended at the back
         
     #returns information_region, max_speed_region, current_speed_region
     def get_images(self):

@@ -1,5 +1,5 @@
 from reinforcment_learning.screen_grabber import ScreenGrabber
-from reinforcment_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
+from reinforcment_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer, GearImageComparer
 from reinforcment_learning.types import RightLeftHandDriveType
 from reinforcment_learning.terminal import print_colored, TerminalColors
 import pytesseract
@@ -18,15 +18,18 @@ class StepInterpreter:
         self.last_info_detected_time = 0 #info detection should be time as to not detect it multiple times
         pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
         self._saved_lost_progress = 0
+        self.previous_full_screen = np.zeros(training_screen_size, dtype=np.uint8)
+        self.gear_comparer = GearImageComparer()
 
 
-    def calculate_values(self):
+    def get_next_step(self):
         images = self.screen_grabber.get_images()
         screenshotTime = time.time()
         current_time_to_travel = self._get_current_time_to_travel(images[0])
         max_speed = self._get_max_speed(images[self.screen_grabber.get_max_speed_image_index()])
         current_speed = self._get_current_speed(images[self.screen_grabber.get_current_speed_image_index()])
         info_title = self._read_from_info_title_region(images[self.screen_grabber.get_info_title_image_index()])
+        current_gear = self._read_current_gear(images[self.screen_grabber.get_current_gear_image_index()])
         whole_screen_resized = np.transpose(images[self.screen_grabber.get_whole_screen_resized_image_index()], (2, 0, 1))
         penalty_score = 0
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
@@ -34,7 +37,9 @@ class StepInterpreter:
             print("is info", info_title)
             penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[self.screen_grabber.get_gps_info_image_index()])
             self.last_info_detected_time = screenshotTime
-        return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized
+        prev_screen = self.previous_full_screen
+        self.previous_full_screen = whole_screen_resized
+        return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized, prev_screen, current_gear
     
     def get_resized_screenshot(self):
         return self.screen_grabber.get_images()[4]
@@ -46,7 +51,9 @@ class StepInterpreter:
                 return currentInfoTitle
             case ImageSimilarityMatch.NO_MATCH | ImageSimilarityMatch.INFO:
                 return currentInfoTitle
-                
+    
+    def _read_current_gear(self, current_gear_image):
+        return self.gear_comparer.get_current_gear(current_gear_image)
 
     def _get_current_time_to_travel(self, info_image):
         currentInfoString = pytesseract.image_to_string(image=info_image)
@@ -233,5 +240,6 @@ if __name__ == "__main__":
         stepInt.set_right_left_hand_drive()
         # stepInt.screen_grabber._left_right_hand_drive_type = RightLeftHandDriveType.LEFT
         # stepInt.diplay_images_debug()
-        current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = stepInt.calculate_values()
+        current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized, prev_screen, current_gear = stepInt.get_next_step()
+        print(current_gear)
         time.sleep(2)

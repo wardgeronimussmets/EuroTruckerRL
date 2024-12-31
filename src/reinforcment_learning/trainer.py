@@ -7,24 +7,7 @@ from datetime import datetime
 
 
 def save_model(model):
-    print_colored("Saving model", TerminalColors.INFO)
-    
-    # Get today's date in 'yyyy_mm_dd' format
-    today = datetime.today().strftime('%Y_%m_%d')
-    
-    # Set the initial file name
-    base_filename = f"reinforcment_learning/models/ppo_ets2_{today}"
-    
-    # Check if file already exists and increment number if it does
-    filename = base_filename
-    counter = 1
-    while os.path.exists(f"{filename}.zip"):  # Assuming the model is saved as .zip, adjust if needed
-        filename = f"{base_filename}_{counter}"
-        counter += 1
-    
-    # Save the model with the appropriate file name
-    model.save(f"{filename}")
-    print_colored(f"Model saved as {filename}.zip", TerminalColors.INFO)
+    save_at_basepath(model, "reinforcment_learning/models")
 
 def load_model(env):
     print_colored("Loading model", TerminalColors.INFO)
@@ -40,30 +23,32 @@ class SaveModelCallback(BaseCallback):
         self.model = model
     
     def _on_step(self) -> bool:
-        if self.model is None:
-            raise ValueError("Model cannot be None")
-        
-        print_colored("Saving model at checkpoint", TerminalColors.INFO)
-        
-        # Get today's date in 'yyyy_mm_dd' format
-        today = datetime.today().strftime('%Y_%m_%d')
-        
-        # Set the initial file name
-        base_filename = f"reinforcment_learning/models/checkpoints/ppo_ets2_{today}"
-        
-        # Check if file already exists and increment number if it does
-        filename = base_filename
-        counter = 1
-        while os.path.exists(f"{filename}.zip"):  # Assuming the model is saved as .zip, adjust if needed
-            filename = f"{base_filename}_{counter}"
-            counter += 1
-        
-        # Save the model with the appropriate file name
-        self.model.save(f"{filename}")
-        print_colored(f"Model at checkpoint saved as {filename}.zip", TerminalColors.INFO)
-        
+        save_at_basepath(self.model, "reinforcment_learning/models/checkpoints")        
         return True
-
+    
+def save_at_basepath(model, base_path, is_from_checkpoint=False):
+    if model is None:
+        raise ValueError("Model cannot be None")
+    
+    check_point_indication_string = "at checkpoint" if is_from_checkpoint else ""    
+    print_colored("Saving model " + check_point_indication_string, TerminalColors.INFO)
+    
+    # Get today's date in 'yyyy_mm_dd' format
+    today = datetime.today().strftime('%Y_%m_%d')
+    
+    # Set the initial file name
+    base_filename = f"{base_path}/ppo_ets2_{today}"
+    
+    # Check if file already exists and increment number if it does
+    filename = base_filename
+    counter = 1
+    while os.path.exists(f"{filename}.zip"):  # Assuming the model is saved as .zip, adjust if needed
+        filename = f"{base_filename}_{counter}"
+        counter += 1
+    
+    # Save the model with the appropriate file name
+    model.save(f"{filename}")
+    print_colored(f"Model at checkpoint saved as {filename}.zip", TerminalColors.INFO)
 
 if __name__ == "__main__":
     env = ETS2RLEnvironment()

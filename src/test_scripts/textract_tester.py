@@ -5,7 +5,7 @@ from config.config_loader import load_relative_regions_config
 import pytesseract
 import time
 import os
-
+from reinforcment_learning.image_comparer import GearImagePostProcessor
 
 def capture_partial_screen_and_save(relative_region, output_path):
     pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
@@ -31,7 +31,8 @@ def capture_partial_screen_and_save(relative_region, output_path):
     # Capture the screen region specified by the 'region' tuple (in absolute pixels)
     start_time = time.time()
     screenshot = pyautogui.screenshot(region=(x, y, width, height)).convert("RGB")
-    print(pytesseract.image_to_string(image=screenshot))
+    processed_screenshot = GearImagePostProcessor().process_gear_image(screenshot)
+    print(pytesseract.image_to_string(image=screenshot, config='--psm 6'))
 
     print("Time elapsed:", time.time() - start_time, "s")
 
@@ -43,7 +44,7 @@ def capture_partial_screen_and_save(relative_region, output_path):
     screenshot_bgr = cv2.cvtColor(screenshot_np, cv2.COLOR_RGB2BGR)
 
     # Display the image using OpenCV
-    cv2.imshow("Captured Region", screenshot_bgr)
+    cv2.imshow("Captured Region", processed_screenshot)
     
     # Wait for a key press to close the window
     cv2.waitKey(0)
@@ -57,7 +58,7 @@ def capture_partial_screen_and_save(relative_region, output_path):
 
 # Example usage:
 # Define the region in relative percentages (from 0 to 1)
-relative_region = load_relative_regions_config('rhd_text_information_region')  # Load region config
+relative_region = load_relative_regions_config('lhd_current_gear_region')  # Load region config
 output_path = os.path.join(os.getcwd(), "captured_region.png")  # Save to the current working directory
 
 # Capture and save the partial screenshot

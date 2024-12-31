@@ -3,6 +3,7 @@ import numpy as np
 from reinforcment_learning.step_interpreter import StepInterpreter
 from reinforcment_learning.ets2_interactor import ETS2Interactor
 from reinforcment_learning.terminal import TerminalColors, print_colored
+from reinforcment_learning.image_comparer import GearImageComparer
 import math
 import time
 import stable_baselines3.common.env_checker
@@ -29,15 +30,21 @@ class ETS2RLEnvironment(gym.Env):
         HEIGHT = 134
         WIDTH = 240
         ''' observation space:
-                screen: "screenshot rezised",
-                max_speed: max speed numb
+                current_screen: "current screenshot rezised",
+                previous_screen: "previous screenshot rezised, this gives the AI an idea of the speed of obstacles around him",
+                max_speed: max speed numb,
+                current_speed: current speed numb,
+                current_gear: the gear the truck is currently using
         '''
         self.observation_space = gym.spaces.Dict(
             {
-                "screen": gym.spaces.Box(low=0, high=255,
+                "current_screen": gym.spaces.Box(low=0, high=255,
+                                                shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8),
+                "previous_screen": gym.spaces.Box(low=0, high=255,
                                                 shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8),
                 "max_speed": gym.spaces.Discrete(TRUCK_MAX_DETECTABLED_SPEED + 1),  # assuming max speed is inclusive
                 "current_speed": gym.spaces.Discrete(TRUCK_MAX_DETECTABLED_SPEED + 1),
+                "current_gear": gym.spaces.Discrete(GearImageComparer.TOTAL_AMOUNT_OF_GEARS) #assuming 12 forward + 4 reverse is maximum with 4 is neutral
             }
         )
         
@@ -45,7 +52,7 @@ class ETS2RLEnvironment(gym.Env):
         self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize, log_inputs=False)
         self.previous_time_to_travel = 0
         self.last_improvement_time = math.inf
-        
+                
         self.cumulated_reward = 0
         self.cumulated_reward_count = 0
         self.step_count = 0
@@ -101,8 +108,9 @@ class ETS2RLEnvironment(gym.Env):
                 self.ets2_interactor.high_beams()
                 # print("high beams")
         
-        
-        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, unruly_behaviour_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, \
+        unruly_behaviour_score, whole_screen_resized, previous_whole_screen_resized = \
+        self.step_interpreter.get_next_step()        
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         position_reward_score = self.step_interpreter.calculate_position_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
         reward = position_reward_score - unruly_behaviour_score
@@ -110,7 +118,7 @@ class ETS2RLEnvironment(gym.Env):
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
         self.previous_time_to_travel = current_time_to_travel
         self._progress_logging(reward, truncated)
-        return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
+        return (self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
                 reward, terminated, truncated, 
                 self._get_info(
                     current_time_to_travel=current_time_to_travel,
@@ -118,7 +126,6 @@ class ETS2RLEnvironment(gym.Env):
                     current_speed=current_speed,
                     info_title=info_title,
                     reward_score=reward,
-                    whole_screen_resized=whole_screen_resized
                 ))
     
     def _progress_logging(self, reward, truncated):
@@ -145,9 +152,10 @@ class ETS2RLEnvironment(gym.Env):
             return TRUCK_MAX_DETECTABLED_SPEED
         return max_speed
     
-    def _get_obs(self, screenshot, max_speed, current_speed):
+    def _get_obs(self, screenshot, previous_screenshot, max_speed, current_speed):
         return {
-            "screen": screenshot,
+            "current_screen": screenshot,
+            "previous_screen": previous_screenshot,
             "max_speed": max_speed,
             "current_speed": current_speed
         }
@@ -169,7 +177,7 @@ class ETS2RLEnvironment(gym.Env):
         self.ets2_interactor.start_new_job()
         self.step_interpreter.set_right_left_hand_drive()
         self.last_improvement_time = time.time()
-        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.calculate_values()
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.get_next_step()
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         self.previous_time_to_travel = current_time_to_travel
         return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 

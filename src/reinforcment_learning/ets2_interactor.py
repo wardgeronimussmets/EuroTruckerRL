@@ -252,7 +252,13 @@ if __name__ == "__main__":
 
     interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
     interactor.reset_joysticks()
-    keep_gamepad_detected()
+    # keep_gamepad_detected()
+    for i in range(0, 10):
+        upshift(interactor)
+        print("upshifted")
+        time.sleep(0.5)
+    print("finished, will be sleeping for a while")
+    time.sleep(1000)
     print("You have 10 seconds before code will continue")
     trigger_button(interactor)
     # start_new_job(interactor)
