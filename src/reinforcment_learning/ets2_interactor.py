@@ -1,8 +1,8 @@
 import vgamepad as vg
 import time
-from reinforcement_learning.screen_grabber import ScreenGrabber
-from reinforcement_learning.image_comparer import CursorOnDriveComparer
-from reinforcement_learning.types import CurrentLightMode
+from reinforcment_learning.screen_grabber import ScreenGrabber
+from reinforcment_learning.image_comparer import CursorOnDriveComparer
+from reinforcment_learning.types import CurrentLightMode
 
 class ETS2Interactor:
     def __init__(self, log_inputs=False, skip_initialize=False):

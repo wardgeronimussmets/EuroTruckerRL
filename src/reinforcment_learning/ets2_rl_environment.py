@@ -1,14 +1,14 @@
 import gymnasium as gym
 import numpy as np
-from reinforcement_learning.step_interpreter import StepInterpreter
-from reinforcement_learning.ets2_interactor import ETS2Interactor
-from reinforcement_learning.terminal import TerminalColors
+from reinforcment_learning.step_interpreter import StepInterpreter
+from reinforcment_learning.ets2_interactor import ETS2Interactor
+from reinforcment_learning.terminal import TerminalColors, print_colored
 import math
 import time
 import stable_baselines3.common.env_checker
 
 TRUCK_MAX_DETECTABLED_SPEED = 200
-MAX_TIME_WITHOUT_PROGRESS_SECONDS = 60
+MAX_TIME_WITHOUT_PROGRESS_SECONDS = 180
 
 class ETS2RLEnvironment(gym.Env):
 
@@ -90,12 +90,16 @@ class ETS2RLEnvironment(gym.Env):
         match lights_input:
             case 0:
                 self.ets2_interactor.lights_off()
+                # print("lights off")
             case 1:
                 self.ets2_interactor.lights_parking()
+                # print("lights parking")
             case 2:
                 self.ets2_interactor.lights_on()
+                # print("lights on")
             case 3:
                 self.ets2_interactor.high_beams()
+                # print("high beams")
         
         
         current_time_to_travel_uncleaned, max_speed, current_speed, info_title, unruly_behaviour_score, whole_screen_resized = self.step_interpreter.calculate_values()
@@ -105,7 +109,7 @@ class ETS2RLEnvironment(gym.Env):
         terminated = False #todo wsme: detect when the job is done
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
         self.previous_time_to_travel = current_time_to_travel
-        self._progress_logging(reward)
+        self._progress_logging(reward, truncated)
         return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
                 reward, terminated, truncated, 
                 self._get_info(
@@ -117,12 +121,14 @@ class ETS2RLEnvironment(gym.Env):
                     whole_screen_resized=whole_screen_resized
                 ))
     
-    def _progress_logging(self, reward):
+    def _progress_logging(self, reward, truncated):
         self.cumulated_reward += reward
         self.cumulated_reward_count += 1
         self.step_count += 1
-        if self.cumulated_reward_count > 100:
-            print("After", self.step_count, "steps, the acumulated reward is:", self.cumulated_reward)
+        if self.cumulated_reward_count > 100 or truncated:
+            print_colored(f"Exuted steps: {self.step_count}", TerminalColors.INFO)
+            print_colored(f"Average reward: {self.cumulated_reward / self.cumulated_reward_count} over {self.cumulated_reward_count} steps", TerminalColors.INFO)
+            print("After", self.step_count, "steps, the average reward was:", self.cumulated_reward / self.cumulated_reward_count,)
             self.cumulated_reward = 0
             self.cumulated_reward_count = 0
 
@@ -148,14 +154,13 @@ class ETS2RLEnvironment(gym.Env):
     
     def _should_time_out_and_calculate(self, current_time_to_travel):
         current_time = time.time()
-        print(f"in time out: current_time_to_travel: {current_time_to_travel}, self.previous_time_to_travel: {self.previous_time_to_travel}")
         if self.previous_time_to_travel - current_time_to_travel > 0:
             #making progress
             self.last_improvement_time = current_time
         else:
             #no progress
             if current_time - self.last_improvement_time > MAX_TIME_WITHOUT_PROGRESS_SECONDS:
-                print(f"{TerminalColors.INFO}Timed out, to long ({current_time - self.last_improvement_time}) seconds without progress{TerminalColors.ENDC}")
+                print_colored(f"Timed out, to long ({current_time - self.last_improvement_time}) seconds without progress", TerminalColors.INFO)
                 return True
         return False
             

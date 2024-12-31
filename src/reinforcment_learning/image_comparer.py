@@ -1,7 +1,7 @@
 import cv2
 from skimage.metrics import structural_similarity as compare_ssim
-from reinforcement_learning.screen_grabber import ScreenGrabber
-from reinforcement_learning.types import RightLeftHandDriveType, ImageSimilarityMatch
+from reinforcment_learning.screen_grabber import ScreenGrabber
+from reinforcment_learning.types import RightLeftHandDriveType, ImageSimilarityMatch
 import time
 
 class ImageInfoComparer:

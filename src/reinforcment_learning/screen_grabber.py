@@ -1,6 +1,6 @@
 import pyautogui
 from config.config_loader import load_relative_regions_config
-from reinforcement_learning.types import RightLeftHandDriveType
+from reinforcment_learning.types import RightLeftHandDriveType
 import numpy as np
 import cv2
 

@@ -1,7 +1,7 @@
-from reinforcement_learning.screen_grabber import ScreenGrabber
-from reinforcement_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
-from reinforcement_learning.types import RightLeftHandDriveType
-from reinforcement_learning.terminal import print_colored, TerminalColors
+from reinforcment_learning.screen_grabber import ScreenGrabber
+from reinforcment_learning.image_comparer import ImageInfoComparer, ImageSimilarityMatch, RightLeftHandDriveComparer
+from reinforcment_learning.types import RightLeftHandDriveType
+from reinforcment_learning.terminal import print_colored, TerminalColors
 import pytesseract
 import time
 import re
@@ -17,6 +17,8 @@ class StepInterpreter:
         self.right_left_hand_comparer = RightLeftHandDriveComparer()
         self.last_info_detected_time = 0 #info detection should be time as to not detect it multiple times
         pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
+        self._saved_lost_progress = 0
+
 
     def calculate_values(self):
         images = self.screen_grabber.get_images()
@@ -48,6 +50,8 @@ class StepInterpreter:
 
     def _get_current_time_to_travel(self, info_image):
         currentInfoString = pytesseract.image_to_string(image=info_image)
+        #sometimes the 5 get's read as an S, no other S should be present -> eazy fix is to replace S with 5
+        currentInfoString = currentInfoString.replace("S", "5")
         splitInfo = currentInfoString.split(",")
         if len(splitInfo) > 2:
             timeInfo = splitInfo[2] # rest is information about the time of day and which day
@@ -98,18 +102,31 @@ class StepInterpreter:
         return 0
     
     def calculate_position_reward_score(self, prev_time_to_travel, current_time_to_travel, current_speed):
-        print(f"prev_time_to_travel: {prev_time_to_travel}, current_time_to_travel: {current_time_to_travel}, current_speed: {current_speed}")
         if prev_time_to_travel is None or current_time_to_travel is None:
             return 0
         progress = prev_time_to_travel - current_time_to_travel
-        reward = progress * 100 + current_speed / 10
-        print(f"progress: {progress}, reward: {reward}")
-        if progress < -10: #-10 because some buffer
-            #went the wrong way
-            if reward < -100:
-                reward = -100
-            print_colored(f"Penalty for going the wrong way: {reward}", TerminalColors.PENALTY)
-        return reward
+        progress_reward = progress * 100
+        speed_reward = current_speed / 10
+        reward =  progress_reward + speed_reward
+        #sometimes wrongfully detected -> if it isn't corrected in the next step -> do punish
+        if self._saved_lost_progress > 0:
+            if progress + 1 >= self._saved_lost_progress and progress - 1 <= self._saved_lost_progress: #check if is around the same
+                #lost progress has been corrected
+                self._saved_lost_progress = 0
+                return speed_reward
+            else:
+                #did in fact go the wrong way
+                if reward < -100:
+                    reward = -100
+                print_colored(f"Penalty for going the wrong way: {reward}", TerminalColors.PENALTY)
+                self._saved_lost_progress = 0
+                return reward
+        elif progress < 0:
+            #save lost progress, might have gone wrong way. Let's see if it has been corrected in the next step
+            self._saved_lost_progress = -progress
+            return speed_reward   
+        else:
+            return reward         
     
     def _fine_to_penalty_score(self, fine):
         #fine's can go as high as €5000
