@@ -101,24 +101,23 @@ class GearImageComparer:
     TOTAL_AMOUNT_OF_GEARS = 17
     def __init__(self):
         #using pickle instead of images because changes occur between saving and loading an image
-        self.gear_n_image = cv2.imread("resources/gear_N.png", cv2.IMREAD_COLOR)
-        self.gear_n_image = cv2.cvtColor(self.gear_n_image, cv2.COLOR_BGR2GRAY)
-        self.gear_1_image = cv2.imread("resources/gear_1.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_2_image = cv2.imread("resources/gear_2.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_3_image = cv2.imread("resources/gear_3.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_4_image = cv2.imread("resources/gear_4.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_5_image = cv2.imread("resources/gear_5.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_6_image = cv2.imread("resources/gear_6.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_7_image = cv2.imread("resources/gear_7.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_8_image = cv2.imread("resources/gear_8.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_9_image = cv2.imread("resources/gear_9.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_10_image = cv2.imread("resources/gear_10.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_11_image = cv2.imread("resources/gear_11.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_12_image = cv2.imread("resources/gear_12.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_r1_image = cv2.imread("resources/gear_r1.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_r2_image = cv2.imread("resources/gear_r2.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_r3_image = cv2.imread("resources/gear_r3.png", cv2.IMREAD_GRAYSCALE)
-        self.gear_r4_image = cv2.imread("resources/gear_r4.png", cv2.IMREAD_GRAYSCALE)
+        self.gear_n_image = pickle.load(open("resources/gear_n.p", "rb"))
+        self.gear_1_image = pickle.load(open("resources/gear_1.p", "rb"))
+        self.gear_2_image = pickle.load(open("resources/gear_2.p", "rb"))
+        self.gear_3_image = pickle.load(open("resources/gear_3.p", "rb"))
+        self.gear_4_image = pickle.load(open("resources/gear_4.p", "rb"))
+        self.gear_5_image = pickle.load(open("resources/gear_5.p", "rb"))
+        self.gear_6_image = pickle.load(open("resources/gear_6.p", "rb"))
+        self.gear_7_image = pickle.load(open("resources/gear_7.p", "rb"))
+        self.gear_8_image = pickle.load(open("resources/gear_8.p", "rb"))
+        self.gear_9_image = pickle.load(open("resources/gear_9.p", "rb"))
+        self.gear_10_image = pickle.load(open("resources/gear_10.p", "rb"))
+        self.gear_11_image = pickle.load(open("resources/gear_11.p", "rb"))
+        self.gear_12_image = pickle.load(open("resources/gear_12.p", "rb"))
+        self.gear_r1_image = pickle.load(open("resources/gear_r1.p", "rb"))
+        self.gear_r2_image = pickle.load(open("resources/gear_r2.p", "rb"))
+        self.gear_r3_image = pickle.load(open("resources/gear_r3.p", "rb"))
+        self.gear_r4_image = pickle.load(open("resources/gear_r4.p", "rb"))
         self._fit_images_to_correct_size()
         self.previous_gear = 4
     
@@ -185,10 +184,7 @@ class GearImageComparer:
         return self.gear_n_image
     
     def get_current_gear(self, image_to_compare):
-        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)   
-        
-        highlight_differences(image_to_compare, self._gear_numb_to_image(4), "current_gear.png")     
-        
+        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)        
         own_gear = self._gear_numb_to_image(self.previous_gear)
         if self._check_if_correct_gear(image_to_compare, own_gear):
             return self.previous_gear
@@ -212,8 +208,7 @@ class GearImageComparer:
     
     def _check_if_correct_gear(self, im1, im2):
         similarity, _ = compare_ssim(im1, im2, full=True)
-        if similarity > 0.92:
-            print("similarity", similarity)
+        if similarity > 0.89:
             return True
         return False
 
