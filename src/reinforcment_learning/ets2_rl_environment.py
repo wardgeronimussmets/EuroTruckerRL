@@ -4,6 +4,7 @@ from reinforcment_learning.step_interpreter import StepInterpreter
 from reinforcment_learning.ets2_interactor import ETS2Interactor
 from reinforcment_learning.terminal import TerminalColors, print_colored
 from reinforcment_learning.image_comparer import GearImageComparer
+from reinforcment_learning.types import RequestedLightMode
 import math
 import time
 import stable_baselines3.common.env_checker
@@ -96,16 +97,16 @@ class ETS2RLEnvironment(gym.Env):
         lights_input = action[4]
         match lights_input:
             case 0:
-                self.ets2_interactor.lights_off()
+                self.ets2_interactor.update_lights(RequestedLightMode.OFF)
                 # print("lights off")
             case 1:
-                self.ets2_interactor.lights_parking()
+                self.ets2_interactor.update_lights(RequestedLightMode.PARKING)
                 # print("lights parking")
             case 2:
-                self.ets2_interactor.lights_on()
+                self.ets2_interactor.update_lights(RequestedLightMode.ON)
                 # print("lights on")
             case 3:
-                self.ets2_interactor.high_beams()
+                self.ets2_interactor.update_lights(RequestedLightMode.HIGH_BEAMS)
                 # print("high beams")
         
         current_time_to_travel_uncleaned, max_speed, current_speed, info_title, \

@@ -2,7 +2,7 @@ import vgamepad as vg
 import time
 from reinforcment_learning.screen_grabber import ScreenGrabber
 from reinforcment_learning.image_comparer import CursorOnDriveComparer
-from reinforcment_learning.types import CurrentLightMode
+from reinforcment_learning.types import RequestedLightMode, CurrentLightMode
 
 class ETS2Interactor:
     def __init__(self, log_inputs=False, skip_initialize=False):
@@ -11,6 +11,7 @@ class ETS2Interactor:
         self.screen_grabber = ScreenGrabber()
         self.cursor_on_drive_comparer = CursorOnDriveComparer()
         self._current_lights = CurrentLightMode.OFF
+        self._high_beams_activated = False
         self.gamepad.reset()
         if not skip_initialize:
             print("Starting virtual gamepad, you have 10 seconds to have the game focused and the car in drive")
@@ -146,56 +147,57 @@ class ETS2Interactor:
     def downshift(self):
         self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_LEFT_SHOULDER, sleep_between_press_and_release=0.05)
         
-    def lights_off(self):
-        self._release_high_beams()
-        switch_times = 0
-        match self._current_lights:
-            case CurrentLightMode.OFF:
-                pass
-            case CurrentLightMode.PARKING:
-                switch_times = 2
-            case CurrentLightMode.ON:
-                switch_times = 1
-        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
-        self._current_lights = CurrentLightMode.OFF
-    
-    def lights_on(self):
-        self._release_high_beams()
-        switch_times = 0
-        match self._current_lights:
-            case CurrentLightMode.OFF:
-                switch_times = 1
-            case CurrentLightMode.PARKING:
-                switch_times = 2
-            case CurrentLightMode.ON:
-                pass
-        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
-        self._current_lights = CurrentLightMode.ON
-    
-    def lights_parking(self):
-        self._release_high_beams()
-        switch_times = 0
-        match self._current_lights:
-            case CurrentLightMode.OFF:
-                switch_times = 2
-            case CurrentLightMode.PARKING:
-                pass
-            case CurrentLightMode.ON:
-                switch_times = 1
-        self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, switch_times, sleep_between=0.1)
-        self._current_lights = CurrentLightMode.PARKING
+    #3 modes: off, parking, on. IF light control button is held for about 0.3 seconds, on will be transformed into high beams
+    def update_lights(self, new_lights:RequestedLightMode):
+        amount_of_switches = self._get_amount_of_light_toggles(new_lights, self._current_lights)
+        if amount_of_switches > 0:
+            self.press_and_release_repeats(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, amount_of_switches, sleep_between=0.1)
+        #check if need to update high beams
+        if (new_lights == RequestedLightMode.HIGH_BEAMS and not self._high_beams_activated) or \
+            (new_lights == RequestedLightMode.ON and self._high_beams_activated):
+            self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, sleep_between_press_and_release=0.3) 
+            self._high_beams_activated = not self._high_beams_activated    
+        self._update_current_lights_type(new_lights)       
         
-    def _release_high_beams(self):
-        if self._current_lights == CurrentLightMode.HIGH_BEAMS:
-            self.gamepad.release_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
-            self.gamepad.update()
+        
+    def _update_current_lights_type(self, new_lights:RequestedLightMode):
+        match new_lights:
+            case RequestedLightMode.OFF:
+                self._current_lights = CurrentLightMode.OFF
+            case RequestedLightMode.PARKING:
+                self._current_lights = CurrentLightMode.PARKING
+            case RequestedLightMode.ON | RequestedLightMode.HIGH_BEAMS:
+                self._current_lights = CurrentLightMode.ON
+        
+    def _get_amount_of_light_toggles(self, new_lights:RequestedLightMode, current_lights:CurrentLightMode):
+        match new_lights:
+            case RequestedLightMode.OFF:
+                match current_lights:   
+                    case CurrentLightMode.OFF:
+                        return 0
+                    case CurrentLightMode.PARKING:
+                        return 2
+                    case CurrentLightMode.ON:
+                        return 1
+            case RequestedLightMode.PARKING:
+                match current_lights:
+                    case CurrentLightMode.OFF:
+                        return 2
+                    case CurrentLightMode.PARKING:
+                        return 0
+                    case CurrentLightMode.ON:
+                        return 1
+            case RequestedLightMode.ON | RequestedLightMode.HIGH_BEAMS:
+                match current_lights:
+                    case CurrentLightMode.OFF:
+                        return 1
+                    case CurrentLightMode.PARKING:
+                        return 2
+                    case CurrentLightMode.ON:
+                        return 0
+        return 0
+        
     
-    def high_beams(self):
-        if self._current_lights != CurrentLightMode.HIGH_BEAMS:
-            self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_X)
-            self.gamepad.update()
-        self._current_lights = CurrentLightMode.HIGH_BEAMS
-
     def turn_off_engine(self):
         self.gamepad.press_button(button=vg.XUSB_BUTTON.XUSB_GAMEPAD_DPAD_RIGHT)
         self.gamepad.update()
