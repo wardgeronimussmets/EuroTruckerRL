@@ -6,6 +6,8 @@ import time
 from PIL import Image, ImageOps
 import numpy as np
 from reinforcment_learning.terminal import print_colored, TerminalColors
+from test_scripts.image_visualiser import highlight_differences
+import pickle
 
 class ImageInfoComparer:
     def __init__(self):
@@ -98,7 +100,9 @@ class GearImageComparer:
     #assuming 12 forward + 4 reverse is maximum with 4 is neutral
     TOTAL_AMOUNT_OF_GEARS = 17
     def __init__(self):
-        self.gear_n_image = cv2.imread("resources/gear_N.png", cv2.IMREAD_GRAYSCALE)
+        #using pickle instead of images because changes occur between saving and loading an image
+        self.gear_n_image = cv2.imread("resources/gear_N.png", cv2.IMREAD_COLOR)
+        self.gear_n_image = cv2.cvtColor(self.gear_n_image, cv2.COLOR_BGR2GRAY)
         self.gear_1_image = cv2.imread("resources/gear_1.png", cv2.IMREAD_GRAYSCALE)
         self.gear_2_image = cv2.imread("resources/gear_2.png", cv2.IMREAD_GRAYSCALE)
         self.gear_3_image = cv2.imread("resources/gear_3.png", cv2.IMREAD_GRAYSCALE)
@@ -181,7 +185,9 @@ class GearImageComparer:
         return self.gear_n_image
     
     def get_current_gear(self, image_to_compare):
-        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)        
+        image_to_compare = convert_to_grayscale_if_needed(image_to_compare)   
+        
+        highlight_differences(image_to_compare, self._gear_numb_to_image(4), "current_gear.png")     
         
         own_gear = self._gear_numb_to_image(self.previous_gear)
         if self._check_if_correct_gear(image_to_compare, own_gear):
@@ -207,6 +213,7 @@ class GearImageComparer:
     def _check_if_correct_gear(self, im1, im2):
         similarity, _ = compare_ssim(im1, im2, full=True)
         if similarity > 0.92:
+            print("similarity", similarity)
             return True
         return False
 
@@ -242,7 +249,7 @@ if "__main__" == __name__:
         
     def test_gear_comparer():
         comparer = GearImageComparer()
-        screen_grabber = ScreenGrabber()
+        screen_grabber = ScreenGrabber(left_right_hand_drive_type=RightLeftHandDriveType.RIGHT)
         for i in range(0,50):
             run_test_comparer(comparer, screen_grabber)
             time.sleep(1)

@@ -8,6 +8,7 @@ from reinforcment_learning.types import RequestedLightMode
 import math
 import time
 import stable_baselines3.common.env_checker
+from reinforcment_learning.logger import StepLogger
 
 TRUCK_MAX_DETECTABLED_SPEED = 200
 MAX_TIME_WITHOUT_PROGRESS_SECONDS = 180
@@ -56,10 +57,13 @@ class ETS2RLEnvironment(gym.Env):
         self.ets2_interactor = ETS2Interactor(skip_initialize=skip_initialize, log_inputs=False)
         self.previous_time_to_travel = 0
         self.last_improvement_time = math.inf
+        
+        self.step_logger = StepLogger()
                 
         self.cumulated_reward = 0
         self.cumulated_reward_count = 0
         self.step_count = 0
+        
 
     def step(self, action):
         if action is None:
@@ -122,7 +126,10 @@ class ETS2RLEnvironment(gym.Env):
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
         self.previous_time_to_travel = current_time_to_travel
         self._progress_logging(reward, truncated)
-        return (self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed), current_gear, gps_region), 
+        obs = self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed), current_gear, gps_region)
+        if self.step_logger.should_log():
+            self.step_logger.log_data(obs)
+        return (obs, 
                 reward, terminated, truncated, 
                 self._get_info(
                     current_time_to_travel=current_time_to_travel,
@@ -183,10 +190,12 @@ class ETS2RLEnvironment(gym.Env):
         self.ets2_interactor.start_new_job()
         self.step_interpreter.set_right_left_hand_drive()
         self.last_improvement_time = time.time()
-        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, penalty_score, whole_screen_resized = self.step_interpreter.get_next_step()
+        current_time_to_travel_uncleaned, max_speed, current_speed, info_title, \
+        unruly_behaviour_score, whole_screen_resized, previous_whole_screen_resized, current_gear, gps_region = \
+        self.step_interpreter.get_next_step()
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         self.previous_time_to_travel = current_time_to_travel
-        return (self._get_obs(whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
+        return (self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed), current_gear, gps_region), 
                 self._get_info(
                     current_time_to_travel=current_time_to_travel,
                     max_speed=max_speed,

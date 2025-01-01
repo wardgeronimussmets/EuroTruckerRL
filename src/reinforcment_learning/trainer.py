@@ -53,8 +53,8 @@ def save_at_basepath(model, base_path, is_from_checkpoint=False):
 if __name__ == "__main__":
     env = ETS2RLEnvironment()
     print("ETS2RLEnvironment Loaded, starting the training process")
-    model = load_model(env)
-    # model = new_model(env)
+    # model = load_model(env)
+    model = new_model(env)
     
     # Pass the custom callback to EveryNTimesteps
     event_callback = EveryNTimesteps(n_steps=800, callback=SaveModelCallback(model))
