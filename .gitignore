@@ -3,5 +3,6 @@
 src/captured_region.png
 resources/main_menu.png
 src/reinforcment_learning/models
+src/reinforcment_learning/logging
 src/current_gear.png
 src/current_gear_image.p
