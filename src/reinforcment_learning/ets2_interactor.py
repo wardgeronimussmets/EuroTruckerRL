@@ -3,6 +3,8 @@ import time
 from reinforcment_learning.screen_grabber import ScreenGrabber
 from reinforcment_learning.image_comparer import CursorOnDriveComparer
 from reinforcment_learning.types import RequestedLightMode, CurrentLightMode
+import threading
+import random
 
 class ETS2Interactor:
     def __init__(self, log_inputs=False, skip_initialize=False):
@@ -70,6 +72,20 @@ class ETS2Interactor:
         self.gamepad.update()
         self._sleep_if_needed(sleep_after)
 
+
+    def press_and_release_async(self, button, sleep_between_press_and_release=0.5):
+        sleep_between_press_and_release = self.correct_sleep_between_if_necesarry(button, sleep_between_press_and_release)
+        if self.log_inputs:
+            print(f"Press and release {button.name}")
+        self.gamepad.press_button(button=button)
+        self.gamepad.update()
+        threading.Thread(target=self._release_button_after_delay, args=(button, sleep_between_press_and_release), daemon=True).start()
+        
+    def _release_button_after_delay(self, button, sleep):
+        time.sleep(sleep)
+        self.gamepad.release_button(button=button)
+        self.gamepad.update()
+    
     # Certain buttons won't be detected if they are released immediately -> check if one of them is released immediately -> overwrite if true
     # No buttons will be detected if they are released immediately on slower machines
     def correct_sleep_between_if_necesarry(self, button, sleep_between_press_and_release):
@@ -155,7 +171,7 @@ class ETS2Interactor:
         #check if need to update high beams
         if (new_lights == RequestedLightMode.HIGH_BEAMS and not self._high_beams_activated) or \
             (new_lights == RequestedLightMode.ON and self._high_beams_activated):
-            self.press_and_release(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, sleep_between_press_and_release=0.3) 
+            self.press_and_release_async(vg.XUSB_BUTTON.XUSB_GAMEPAD_X, sleep_between_press_and_release=0.3)
             self._high_beams_activated = not self._high_beams_activated    
         self._update_current_lights_type(new_lights)       
         
@@ -250,18 +266,18 @@ if __name__ == "__main__":
         print("downshift finished")
         interactor.downshift()
         
+    def keep_gamepad_detected():
+        interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
+        interactor.reset_joysticks()
+        # keep_gamepad_detected()
+        
+    def test_lighting_control():
+        print("Running lighting control test")
+        interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
+        for i in range(30):
+            choice = random.choice(list(RequestedLightMode))
+            print("chose", choice)
+            interactor.update_lights(choice)
+            time.sleep(4)    
 
-
-    interactor = ETS2Interactor(log_inputs=True, skip_initialize=True)
-    interactor.reset_joysticks()
-    # keep_gamepad_detected()
-    for i in range(0, 10):
-        upshift(interactor)
-        print("upshifted")
-        time.sleep(0.5)
-    print("finished, will be sleeping for a while")
-    time.sleep(1000)
-    print("You have 10 seconds before code will continue")
-    trigger_button(interactor)
-    # start_new_job(interactor)
-
+    test_lighting_control()
