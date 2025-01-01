@@ -24,22 +24,24 @@ class StepInterpreter:
 
     def get_next_step(self):
         images = self.screen_grabber.get_images()
-        screenshotTime = time.time()
+        screenshot_time = time.time()
         current_time_to_travel = self._get_current_time_to_travel(images[0])
         max_speed = self._get_max_speed(images[self.screen_grabber.get_max_speed_image_index()])
         current_speed = self._get_current_speed(images[self.screen_grabber.get_current_speed_image_index()])
         info_title = self._read_from_info_title_region(images[self.screen_grabber.get_info_title_image_index()])
         current_gear = self._read_current_gear(images[self.screen_grabber.get_current_gear_image_index()])
+        gps_region = images[self.screen_grabber.get_gps_info_image_index()]
         whole_screen_resized = np.transpose(images[self.screen_grabber.get_whole_screen_resized_image_index()], (2, 0, 1))
+        gps_region_resized = np.transpose(self.screen_grabber.resize_gps_region(gps_region), (2, 0, 1))
         penalty_score = 0
         #todo wsme: need to add behaviour for if you want to take ferry, rest, ... best to add in the environment itself NOT HERE
-        if info_title == ImageSimilarityMatch.INFO and screenshotTime - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
+        if info_title == ImageSimilarityMatch.INFO and screenshot_time - self.last_info_detected_time > INFO_DETECTED_TIMEOUT_SECONDS:
             print("is info", info_title)
-            penalty_score = self._extract_penalty_score_from_extra_information_from_gps(images[self.screen_grabber.get_gps_info_image_index()])
-            self.last_info_detected_time = screenshotTime
+            penalty_score = self._extract_penalty_score_from_extra_information_from_gps(gps_region)
+            self.last_info_detected_time = screenshot_time
         prev_screen = self.previous_full_screen
         self.previous_full_screen = whole_screen_resized
-        return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized, prev_screen, current_gear
+        return current_time_to_travel, max_speed, current_speed, info_title, penalty_score, whole_screen_resized, prev_screen, current_gear, gps_region_resized
     
     def get_resized_screenshot(self):
         return self.screen_grabber.get_images()[4]

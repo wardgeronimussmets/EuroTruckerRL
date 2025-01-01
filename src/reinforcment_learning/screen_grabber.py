@@ -57,6 +57,9 @@ class ScreenGrabber():
             load_relative_regions_config('lhd_additional_info_region'),
             load_relative_regions_config('lhd_current_gear_region'),
         ]
+    
+    def resize_gps_region(self, gps_image):
+        return cv2.resize(gps_image, self.training_screen_size, interpolation=cv2.INTER_LINEAR)
 
     def get_current_time_to_travel_image_index(self):
         return 0

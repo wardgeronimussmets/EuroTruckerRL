@@ -35,7 +35,8 @@ class ETS2RLEnvironment(gym.Env):
                 previous_screen: "previous screenshot rezised, this gives the AI an idea of the speed of obstacles around him",
                 max_speed: max speed numb,
                 current_speed: current speed numb,
-                current_gear: the gear the truck is currently using
+                current_gear: the gear the truck is currently using,
+                gps_region: the gps region
         '''
         self.observation_space = gym.spaces.Dict(
             {
@@ -45,7 +46,9 @@ class ETS2RLEnvironment(gym.Env):
                                                 shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8),
                 "max_speed": gym.spaces.Discrete(TRUCK_MAX_DETECTABLED_SPEED + 1),  # assuming max speed is inclusive
                 "current_speed": gym.spaces.Discrete(TRUCK_MAX_DETECTABLED_SPEED + 1),
-                "current_gear": gym.spaces.Discrete(GearImageComparer.TOTAL_AMOUNT_OF_GEARS) #assuming 12 forward + 4 reverse is maximum with 4 is neutral
+                "current_gear": gym.spaces.Discrete(GearImageComparer.TOTAL_AMOUNT_OF_GEARS), #assuming 12 forward + 4 reverse is maximum with 4 is neutral
+                "gps_region": gym.spaces.Box(low=0, high=255,
+                                                shape=(N_CHANNELS, HEIGHT, WIDTH), dtype=np.uint8)
             }
         )
         
@@ -110,7 +113,7 @@ class ETS2RLEnvironment(gym.Env):
                 # print("high beams")
         
         current_time_to_travel_uncleaned, max_speed, current_speed, info_title, \
-        unruly_behaviour_score, whole_screen_resized, previous_whole_screen_resized = \
+        unruly_behaviour_score, whole_screen_resized, previous_whole_screen_resized, current_gear, gps_region = \
         self.step_interpreter.get_next_step()        
         current_time_to_travel = self._clean_time_to_travel(current_time_to_travel_uncleaned)
         position_reward_score = self.step_interpreter.calculate_position_reward_score(self.previous_time_to_travel, current_time_to_travel, current_speed)
@@ -119,7 +122,7 @@ class ETS2RLEnvironment(gym.Env):
         truncated = self._should_time_out_and_calculate(current_time_to_travel) #when the job takes too long -> time out
         self.previous_time_to_travel = current_time_to_travel
         self._progress_logging(reward, truncated)
-        return (self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed)), 
+        return (self._get_obs(whole_screen_resized, previous_whole_screen_resized, self._rescale_speed_if_necesarry(max_speed), self._rescale_speed_if_necesarry(current_speed), current_gear, gps_region), 
                 reward, terminated, truncated, 
                 self._get_info(
                     current_time_to_travel=current_time_to_travel,
@@ -153,12 +156,14 @@ class ETS2RLEnvironment(gym.Env):
             return TRUCK_MAX_DETECTABLED_SPEED
         return max_speed
     
-    def _get_obs(self, screenshot, previous_screenshot, max_speed, current_speed):
+    def _get_obs(self, screenshot, previous_screenshot, max_speed, current_speed, current_gear, gps_region):
         return {
             "current_screen": screenshot,
             "previous_screen": previous_screenshot,
             "max_speed": max_speed,
-            "current_speed": current_speed
+            "current_speed": current_speed,
+            "current_gear": current_gear,
+            "gps_region": gps_region
         }
     
     def _should_time_out_and_calculate(self, current_time_to_travel):
