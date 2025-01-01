@@ -18,7 +18,7 @@ class StepInterpreter:
         self.last_info_detected_time = 0 #info detection should be time as to not detect it multiple times
         pytesseract.pytesseract.tesseract_cmd = r'C:/Program Files/Tesseract-OCR/tesseract.exe'
         self._saved_lost_progress = 0
-        self.previous_full_screen = np.zeros(training_screen_size, dtype=np.uint8)
+        self.previous_full_screen = np.zeros((3, training_screen_size[1], training_screen_size[0]), dtype=np.uint8)
         self.gear_comparer = GearImageComparer()
 
 
